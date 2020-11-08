@@ -1,0 +1,42 @@
+name: Build and run tests
+
+on: push
+
+jobs:
+  test-ingestion:
+    runs-on: ubuntu-latest
+
+    container:
+      image: node:15-alpine
+
+    services:
+      postgres:
+        image: postgres:13-alpine
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: baconlist
+        ports:
+          - 5432:5432
+
+    steps:
+      - uses: actions/checkout@v1
+      - name: npm install, build and test
+        run: |
+          cd server
+          npm install
+          npm run lint
+          npm run build
+          npm run typeorm schema:sync
+          npm run typeorm migration:run
+          npm run test
+        env:
+          CI: true
+          POSTGRES_HOST: postgres
+          POSTGRES_DATABASE: baconlist
+          POSTGRES_PORT: ${{ job.services.postgres.ports[5432] }}
+          POSTGRES_USERNAME: postgres
+          POSTGRES_PASSWORD: postgres
+          JWT_SECRET: test
+          JWT_EXPIRE_TIME: 38000
+          PORT: 3000
