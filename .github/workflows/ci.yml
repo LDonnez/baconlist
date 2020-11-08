@@ -3,7 +3,7 @@ name: Build and run tests
 on: push
 
 jobs:
-  test-ingestion:
+  test-server:
     runs-on: ubuntu-latest
 
     container:
