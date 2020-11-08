@@ -7,7 +7,7 @@ jobs:
     runs-on: ubuntu-latest
 
     container:
-      image: node:15-alpine
+      image: node:14-alpine
 
     services:
       postgres:
@@ -23,6 +23,7 @@ jobs:
       - uses: actions/checkout@v1
       - name: npm install, build and test
         run: |
+          apk add --update python make g++
           cd server
           npm install
           npm run lint
