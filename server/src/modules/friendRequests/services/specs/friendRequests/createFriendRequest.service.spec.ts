@@ -61,8 +61,8 @@ describe("CreateFriendRequestService", () => {
       password: "test"
     })
     await friendRequestRepository.save({
-      receiverId: user.id,
-      requesterId: friend.id
+      receiverId: friend.id,
+      requesterId: user.id
     })
     try {
       const result = await createFriendRequestService.execute(user.id, {
@@ -70,6 +70,7 @@ describe("CreateFriendRequestService", () => {
       })
       expect(result).toBeUndefined()
     } catch (error) {
+      console.log("ERROR: ", error)
       expect(error).toBeDefined()
     }
   })

@@ -6,14 +6,14 @@ import { getRepositoryToken } from "@nestjs/typeorm"
 import { DatabaseService } from "../../../../database/database.service"
 import { User } from "../../../../users/entities/user.entity"
 import { FriendRequest } from "../../../entities/friendRequest.entity"
-import { BuildCookieService } from "../../../../authentication/services/buildCookie.service"
+import { BuildAccessTokenService } from "../../../../authentication/services/buildAccessToken.service"
 
 describe("FriendRequests Controller", () => {
   let app: INestApplication
   let databaseService: DatabaseService
   let userRepository: Repository<User>
   let friendRequestRepository: Repository<FriendRequest>
-  let buildCookieService: BuildCookieService
+  let buildAccessTokenFromUserService: BuildAccessTokenService
 
   beforeAll(async () => {
     const module = await bootstrapTestingModule()
@@ -23,10 +23,12 @@ describe("FriendRequests Controller", () => {
 
     databaseService = module.get<DatabaseService>(DatabaseService)
     userRepository = module.get<Repository<User>>(getRepositoryToken(User))
+    buildAccessTokenFromUserService = module.get<BuildAccessTokenService>(
+      BuildAccessTokenService
+    )
     friendRequestRepository = module.get<Repository<FriendRequest>>(
       getRepositoryToken(FriendRequest)
     )
-    buildCookieService = module.get<BuildCookieService>(BuildCookieService)
   })
 
   it("app should be defined", () => {
@@ -47,13 +49,13 @@ describe("FriendRequests Controller", () => {
         email: "test2@test.com",
         password: "test"
       })
-      const cookie = buildCookieService.execute(user)
+      const accessToken = await buildAccessTokenFromUserService.execute(user)
       const response = await request(app.getHttpServer())
         .post("/friend_requests")
         .send({
           receiverId: receiver.id
         })
-        .set("Cookie", cookie)
+        .set("Authorization", `Bearer ${accessToken}`)
         .expect(201)
       expect(response.body).toBeDefined()
     })
@@ -71,13 +73,13 @@ describe("FriendRequests Controller", () => {
         email: "test2@test.com",
         password: "test"
       })
-      const cookie = buildCookieService.execute(user)
+      const accessToken = await buildAccessTokenFromUserService.execute(user)
       const response = await request(app.getHttpServer())
         .post("/friend_requests")
         .send({
           receiverId: ""
         })
-        .set("Cookie", cookie)
+        .set("Authorization", `Bearer ${accessToken}`)
         .expect(400)
       expect(response.body).toBeDefined()
     })
@@ -101,10 +103,12 @@ describe("FriendRequests Controller", () => {
         receiverId: receiver.id,
         requesterId: requester.id
       })
-      const cookie = buildCookieService.execute(receiver)
+      const accessToken = await buildAccessTokenFromUserService.execute(
+        receiver
+      )
       const response = await request(app.getHttpServer())
         .delete(`/friend_requests/${friendRequest.id}`)
-        .set("Cookie", cookie)
+        .set("Authorization", `Bearer ${accessToken}`)
         .expect(200)
       expect(response.body).toBeDefined()
     })
@@ -128,10 +132,12 @@ describe("FriendRequests Controller", () => {
         receiverId: receiver.id,
         requesterId: requester.id
       })
-      const cookie = buildCookieService.execute(receiver)
+      const accessToken = await buildAccessTokenFromUserService.execute(
+        receiver
+      )
       const response = await request(app.getHttpServer())
         .get("/friend_requests")
-        .set("Cookie", cookie)
+        .set("Authorization", `Bearer ${accessToken}`)
         .expect(200)
       expect(response.body).toBeDefined()
       expect(response.body).toHaveLength(1)

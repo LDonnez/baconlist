@@ -8,7 +8,8 @@ import {
   Param,
   Get,
   UseGuards,
-  Patch
+  Patch,
+  UnauthorizedException
 } from "@nestjs/common"
 import {
   ApiOperation,
@@ -23,6 +24,7 @@ import { UpdateUserDto } from "../../dto/updateUser.dto"
 import { User } from "../../entities/user.entity"
 import { InjectRepository } from "@nestjs/typeorm"
 import { JwtGuard } from "../../../authentication/guards/jwtGuard"
+import { CurrentUser } from "../../../authentication/decorators/currentUser.decorator"
 import { Repository } from "typeorm"
 
 @ApiTags("Users")
@@ -47,8 +49,8 @@ export class UsersController {
 
   @ApiOperation({ description: "returns all users" })
   @ApiOkResponse({ description: "success", type: User, isArray: true })
-  @Get()
   @UseGuards(JwtGuard)
+  @Get()
   public async index(): Promise<User[]> {
     return await this.userRepository.find()
   }
@@ -59,11 +61,16 @@ export class UsersController {
   @ApiOkResponse({ description: "user successfully updated", type: User })
   @ApiBadRequestResponse({ description: "invalid data provided" })
   @UsePipes(new ValidationPipe())
+  @UseGuards(JwtGuard)
   @Patch("/:id")
   public async update(
     @Param("id") id: string,
+    @CurrentUser() currentUser: User,
     @Body() userData: UpdateUserDto
   ): Promise<User> {
+    if (currentUser.id !== id) {
+      throw new UnauthorizedException("not allowed")
+    }
     return await this.updateUserService.execute(id, userData)
   }
 }

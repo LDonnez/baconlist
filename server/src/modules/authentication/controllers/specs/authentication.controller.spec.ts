@@ -7,11 +7,13 @@ import { getRepositoryToken } from "@nestjs/typeorm"
 import { DatabaseService } from "../../../database/database.service"
 import { User } from "../../../users/entities/user.entity"
 import { hash } from "bcrypt"
+import { RefreshTokenState } from "../../entities/refreshTokenState.entity"
 
 describe("Authentication Controller", () => {
   let app: INestApplication
   let databaseService: DatabaseService
   let userRepository: Repository<User>
+  let refreshTokenStateRepository: Repository<RefreshTokenState>
 
   beforeAll(async () => {
     const module = await bootstrapTestingModule()
@@ -21,6 +23,9 @@ describe("Authentication Controller", () => {
 
     databaseService = module.get<DatabaseService>(DatabaseService)
     userRepository = module.get<Repository<User>>(getRepositoryToken(User))
+    refreshTokenStateRepository = module.get<Repository<RefreshTokenState>>(
+      getRepositoryToken(RefreshTokenState)
+    )
   })
 
   it("app should be defined", () => {
@@ -37,11 +42,11 @@ describe("Authentication Controller", () => {
       })
       const response = await request(app.getHttpServer())
         .post("/auth/token")
+        .set("user-agent", "test")
         .send({
           email: user.email,
           password: "test"
         })
-        .expect(200)
       expect(response.body).toBeDefined()
       expect(response.header["set-cookie"]).toHaveLength(1)
     })
@@ -55,6 +60,7 @@ describe("Authentication Controller", () => {
       })
       const response = await request(app.getHttpServer())
         .post("/auth/token")
+        .set("user-agent", "test")
         .send({
           email: user.email,
           password: "wrongpassword"
@@ -73,11 +79,37 @@ describe("Authentication Controller", () => {
       })
       const response = await request(app.getHttpServer())
         .post("/auth/token")
+        .set("user-agent", "test")
         .send({
           email: "email@notexists.com",
           password: "test"
         })
         .expect(400)
+      expect(response.body).toBeDefined()
+      expect(response.header["set-cookie"]).toBeUndefined()
+    })
+
+    it("/POST /auth/token fails authenticating a user because refresh token is revoked", async () => {
+      const user = await userRepository.save({
+        firstName: "test",
+        lastName: "test",
+        email: "test@test.com",
+        password: await hash("test", 10)
+      })
+
+      await refreshTokenStateRepository.save({
+        userId: user.id,
+        userAgent: "test",
+        revoked: true
+      })
+      const response = await request(app.getHttpServer())
+        .post("/auth/token")
+        .set("user-agent", "test")
+        .send({
+          email: "test@test.com",
+          password: "test"
+        })
+        .expect(401)
       expect(response.body).toBeDefined()
       expect(response.header["set-cookie"]).toBeUndefined()
     })
