@@ -55,23 +55,6 @@ describe("AuthenticateService", () => {
     }
   })
 
-  it("should fail authenticating the user because password is empty", async () => {
-    await userRepository.save({
-      firstName: "test",
-      lastName: "test",
-      email: "test@test.com"
-    })
-    try {
-      const result = await authenticateService.execute({
-        email: "test@test.com",
-        password: "test"
-      })
-      expect(result).toBeUndefined()
-    } catch (e) {
-      expect(e).toBeDefined()
-    }
-  })
-
   it("should fail authenticating the user because user with that email is not found", async () => {
     await userRepository.save({
       firstName: "test",
