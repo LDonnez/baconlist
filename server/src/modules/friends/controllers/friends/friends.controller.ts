@@ -76,7 +76,7 @@ export class FriendsController {
     const userId = request.user.id
     const result = await this.deleteFriendService.execute(userId, id)
     await this.friendsGateway.refresh(userId)
-    await this.friendsGateway.refresh(id)
+    await this.friendsGateway.refresh(result.friendId)
     return result
   }
 }
