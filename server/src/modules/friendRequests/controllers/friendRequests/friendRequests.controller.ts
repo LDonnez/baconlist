@@ -24,6 +24,7 @@ import { CreateFriendRequestDto } from "../../dto/createFriendRequest.dto"
 import { JwtGuard } from "../../../authentication/guards/jwtGuard"
 import { FriendRequest } from "../../entities/friendRequest.entity"
 import { RequestWithUser } from "../../../authentication/types/requestWithUser"
+import { FriendRequestsGateway } from "../../gateways/friendRequests/friendRequests.gateway"
 
 @ApiTags("Friend Requests")
 @Controller("friend_requests")
@@ -35,7 +36,9 @@ export class FriendRequestsController {
     @Inject(DeleteFriendRequestService)
     private readonly deleteFriendRequestService: DeleteFriendRequestService,
     @Inject(RetrieveFriendRequestsService)
-    private readonly retrieveFriendRequestsService: RetrieveFriendRequestsService
+    private readonly retrieveFriendRequestsService: RetrieveFriendRequestsService,
+    @Inject(FriendRequestsGateway)
+    private readonly friendRequestsGateway: FriendRequestsGateway
   ) {}
 
   @ApiOperation({ description: "creates a new friend request" })
@@ -51,10 +54,13 @@ export class FriendRequestsController {
     @Body() friendRequestData: CreateFriendRequestDto
   ): Promise<FriendRequest> {
     const userId = request.user.id
-    return await this.createFriendRequestService.execute(
+    const result = await this.createFriendRequestService.execute(
       userId,
       friendRequestData
     )
+    await this.friendRequestsGateway.refresh(userId)
+    await this.friendRequestsGateway.refresh(friendRequestData.receiverId)
+    return result
   }
 
   @ApiOperation({
@@ -82,6 +88,9 @@ export class FriendRequestsController {
     @Param("id") id: string
   ): Promise<FriendRequest> {
     const userId = request.user.id
-    return await this.deleteFriendRequestService.execute(userId, id)
+    const result = await this.deleteFriendRequestService.execute(userId, id)
+    await this.friendRequestsGateway.refresh(userId)
+    await this.friendRequestsGateway.refresh(result.receiverId)
+    return result
   }
 }

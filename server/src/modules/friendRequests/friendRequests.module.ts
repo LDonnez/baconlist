@@ -7,12 +7,15 @@ import { UsersModule } from "../users/users.module"
 import { DeleteFriendRequestService } from "./services/friendRequests/deleteFriendRequest.service"
 import { RetrieveSendFriendRequestsService } from "./services/friendRequests/retrieveSendFriendRequests.service"
 import { FriendRequestsController } from "./controllers/friendRequests/friendRequests.controller"
+import { FriendRequestsGateway } from "./gateways/friendRequests/friendRequests.gateway"
 import { ConfigModule } from "@nestjs/config"
+import { AuthenticationModule } from "../authentication/authentication.module"
 
 @Module({
   imports: [
     ConfigModule,
     UsersModule,
+    AuthenticationModule,
     DatabaseModule.forFeature([FriendRequest])
   ],
   controllers: [FriendRequestsController],
@@ -20,7 +23,8 @@ import { ConfigModule } from "@nestjs/config"
     CreateFriendRequestService,
     RetrieveFriendRequestsService,
     DeleteFriendRequestService,
-    RetrieveSendFriendRequestsService
+    RetrieveSendFriendRequestsService,
+    FriendRequestsGateway
   ],
   exports: [DatabaseModule]
 })
