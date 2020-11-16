@@ -4,9 +4,9 @@ import {
   WsException
 } from "@nestjs/websockets"
 import { Server, Socket } from "socket.io"
-import { parseCookie } from "../../../utils/parseCookie"
+import { parseCookie } from "../utils/parseCookie"
 import { JwtService } from "@nestjs/jwt"
-import { TokenPayload } from "../../types/tokenPayload"
+import { TokenPayload } from "../types/tokenPayload"
 
 export class BaseGateway {
   @WebSocketServer()
