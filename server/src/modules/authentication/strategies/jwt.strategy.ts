@@ -3,7 +3,7 @@ import { PassportStrategy } from "@nestjs/passport"
 import { Injectable, Inject } from "@nestjs/common"
 import { ConfigService } from "@nestjs/config"
 import { GetUserByIdService } from "../../users/services/users/getUserById.service"
-import { TokenPayload } from "../../types/tokenPayload"
+import { TokenPayload } from "../../../types/tokenPayload"
 import { User } from "../../users/entities/user.entity"
 
 @Injectable()
