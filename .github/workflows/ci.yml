@@ -41,3 +41,22 @@ jobs:
           JWT_SECRET: test
           JWT_EXPIRE_TIME: 38000
           PORT: 3000
+
+  test-baconlist-app:
+    runs-on: ubuntu-latest
+
+    container:
+      image: node:14-alpine
+
+    steps:
+      - uses: actions/checkout@v1
+      - name: npm install, build and test
+        run: |
+          cd baconlist-app
+          npm install
+          npm run lint
+          npm run tsc
+          npm run test
+        env:
+          CI: true
+          REACT_APP_EXAMPLE_URL: http://example.com
