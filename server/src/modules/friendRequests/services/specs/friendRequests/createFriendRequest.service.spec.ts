@@ -70,7 +70,6 @@ describe("CreateFriendRequestService", () => {
       })
       expect(result).toBeUndefined()
     } catch (error) {
-      console.log("ERROR: ", error)
       expect(error).toBeDefined()
     }
   })
