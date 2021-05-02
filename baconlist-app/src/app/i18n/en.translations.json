@@ -1,3 +1,6 @@
 {
-  "example": "example"
+  "example": "example",
+  "buttons.log-in": "Log in",
+  "fields.e-mail": "E-mail",
+  "fields.password": "Password"
 }

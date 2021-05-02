@@ -1,5 +1,5 @@
-import exampleReducer from "./example/example.reducer"
+import authReducer from "./auth/auth.slice"
 
 export const appReducers = {
-  example: exampleReducer
+  auth: authReducer
 }

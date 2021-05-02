@@ -1,11 +1,18 @@
 import { RouteObject } from "./types"
-import { ExampleRoute } from "./ExampleRoute"
+import { LoginRoute } from "./LoginRoute"
+import { RootRoute } from "./RootRoute"
 
 export const routes: RouteObject[] = [
   {
-    component: ExampleRoute,
+    component: RootRoute,
     exact: true,
     authorized: true,
     path: "/"
+  },
+  {
+    component: LoginRoute,
+    exact: true,
+    authorized: false,
+    path: "/login"
   }
 ]

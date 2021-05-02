@@ -1,8 +1,11 @@
-import { combineReducers, Reducer } from "redux"
+import { createBrowserHistory, createMemoryHistory } from "history"
+import { combineReducers } from "@reduxjs/toolkit"
 import { appReducers } from "./app/redux/reducers"
-import { State } from "./app/redux/state"
 
-export const rootReducer = (): Reducer<State> =>
-  combineReducers({
-    ...appReducers
-  })
+const isTest = process.env.NODE_ENV === "test"
+
+export const history = isTest
+  ? createMemoryHistory({ initialEntries: ["/"] })
+  : createBrowserHistory()
+
+export const rootReducer = combineReducers(appReducers)

@@ -2,8 +2,8 @@ function getEnvVariable(name: string) {
   return process.env[name] || ""
 }
 
-const EXAMPLE_URL = getEnvVariable("REACT_APP_EXAMPLE_URL")
+const BACONLIST_URL = getEnvVariable("REACT_APP_BACONLIST_URL")
 
 export const API_URLS = {
-  example: EXAMPLE_URL
+  baconlist: BACONLIST_URL
 }
