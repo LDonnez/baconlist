@@ -40,6 +40,8 @@ jobs:
           POSTGRES_PASSWORD: postgres
           JWT_SECRET: test
           JWT_EXPIRE_TIME: 38000
+          ALLOWED_ORIGINS: http://localhost:3000
+          CSRF_SECRET: "ci"
           PORT: 3000
 
   test-baconlist-app:
