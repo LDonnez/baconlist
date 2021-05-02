@@ -7,7 +7,9 @@ import {
   HttpCode,
   ValidationPipe,
   Req,
-  UnauthorizedException
+  UnauthorizedException,
+  Body,
+  UseGuards
 } from "@nestjs/common"
 import { Response } from "express"
 import {
@@ -19,13 +21,22 @@ import {
 import { Request } from "express"
 import { AuthenticationResultDto } from "../dto/authenticationResult.dto"
 import { RefreshTokenService } from "../services/refreshToken.service"
+import { RefreshTokenDto } from "../dto/refreshToken.dto"
+import { BuildCookieWithCsrfTokenService } from "../services/buildCookieWithCsrfToken.service"
+import { BuildCsrfTokenService } from "../services/buildCsrfToken.service"
+import { CsrfGuard } from "../guards/csrfGuard"
 
 @ApiTags("Authentication")
 @Controller("auth")
+@UseGuards(CsrfGuard)
 export class RefreshTokenController {
   constructor(
     @Inject(RefreshTokenService)
-    private readonly refreshTokenService: RefreshTokenService
+    private readonly refreshTokenService: RefreshTokenService,
+    @Inject(BuildCookieWithCsrfTokenService)
+    private readonly buildCsrfCookieService: BuildCookieWithCsrfTokenService,
+    @Inject(BuildCsrfTokenService)
+    private readonly buildCsrfTokenService: BuildCsrfTokenService
   ) {}
 
   @ApiOperation({ description: "refresh access token" })
@@ -39,9 +50,13 @@ export class RefreshTokenController {
   @HttpCode(200)
   public async create(
     @Res() response: Response,
-    @Req() request: Request
+    @Req() request: Request,
+    @Body() body: RefreshTokenDto
   ): Promise<Response<AuthenticationResultDto>> {
-    const refreshTokenFromRequest = this.getRefreshTokenFromRequest(request)
+    const refreshTokenFromRequest = this.getRefreshTokenFromRequest(
+      request,
+      body
+    )
     if (!refreshTokenFromRequest) {
       throw new UnauthorizedException("not allowed")
     }
@@ -50,14 +65,15 @@ export class RefreshTokenController {
       accessToken,
       cookie
     } = await this.refreshTokenService.execute(refreshTokenFromRequest)
-    response.setHeader("Set-Cookie", cookie)
+    const csrfCookie = this.buildCsrfCookie()
+    response.setHeader("Set-Cookie", [cookie, csrfCookie])
     return response.send({ accessToken, refreshToken })
   }
 
-  private getRefreshTokenFromRequest(request: Request): string | undefined {
-    const body: { refreshToken?: string } = request.body as {
-      refreshToken?: string
-    }
+  private getRefreshTokenFromRequest(
+    request: Request,
+    body: RefreshTokenDto
+  ): string | undefined {
     if (body.refreshToken) {
       return body.refreshToken
     }
@@ -69,5 +85,10 @@ export class RefreshTokenController {
       refreshToken?: string
     }
     return cookies["refreshToken"]
+  }
+
+  private buildCsrfCookie(): string {
+    const csrfCookie = this.buildCsrfTokenService.execute()
+    return this.buildCsrfCookieService.execute(csrfCookie)
   }
 }
