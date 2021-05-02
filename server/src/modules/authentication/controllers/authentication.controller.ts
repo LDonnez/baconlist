@@ -23,6 +23,8 @@ import { BuildCookieWithRefreshTokenService } from "../services/buildCookieWithR
 import { FindOrCreateRefreshTokenStateService } from "../services/findOrCreateRefreshTokenState.service"
 import { BuildAccessTokenService } from "../services/buildAccessToken.service"
 import { BuildRefreshTokenService } from "../services/buildRefreshToken.service"
+import { BuildCookieWithCsrfTokenService } from "../services/buildCookieWithCsrfToken.service"
+import { BuildCsrfTokenService } from "../services/buildCsrfToken.service"
 
 @ApiTags("Authentication")
 @Controller("auth")
@@ -34,10 +36,14 @@ export class AuthenticationController {
     private readonly findOrCreateRefreshTokenStateService: FindOrCreateRefreshTokenStateService,
     @Inject(BuildCookieWithRefreshTokenService)
     private readonly buildCookieWithRefreshTokenService: BuildCookieWithRefreshTokenService,
+    @Inject(BuildCookieWithCsrfTokenService)
+    private readonly buildCookieWithCsrfTokenService: BuildCookieWithCsrfTokenService,
     @Inject(BuildAccessTokenService)
     private readonly buildAccessTokenService: BuildAccessTokenService,
     @Inject(BuildRefreshTokenService)
-    private readonly buildRefreshTokenService: BuildRefreshTokenService
+    private readonly buildRefreshTokenService: BuildRefreshTokenService,
+    @Inject(BuildCsrfTokenService)
+    private readonly buildCsrfTokenService: BuildCsrfTokenService
   ) {}
 
   @ApiOperation({ description: "authenticates a user with email and password" })
@@ -62,9 +68,19 @@ export class AuthenticationController {
     const refreshToken = await this.buildRefreshTokenService.execute(
       refreshTokenData
     )
-    const cookie = this.buildCookieWithRefreshTokenService.execute(refreshToken)
+    const refresTokenCookie = this.buildRefreshTokenCookie(refreshToken)
+    const csrfCookie = this.buildCsrfCookie()
     const accessToken = await this.buildAccessTokenService.execute(user)
-    response.setHeader("Set-Cookie", cookie)
+    response.setHeader("Set-Cookie", [refresTokenCookie, csrfCookie])
     return response.send({ accessToken, refreshToken })
+  }
+
+  private buildRefreshTokenCookie(refreshToken: string): string {
+    return this.buildCookieWithRefreshTokenService.execute(refreshToken)
+  }
+
+  private buildCsrfCookie(): string {
+    const csrfCookie = this.buildCsrfTokenService.execute()
+    return this.buildCookieWithCsrfTokenService.execute(csrfCookie)
   }
 }

@@ -48,7 +48,7 @@ describe("Authentication Controller", () => {
           password: "test"
         })
       expect(response.body).toBeDefined()
-      expect(response.header["set-cookie"]).toHaveLength(1)
+      expect(response.header["set-cookie"]).toHaveLength(2)
     })
 
     it("/POST /auth/token fails authenticating a user because password is wrong", async () => {
