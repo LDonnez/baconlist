@@ -6,7 +6,7 @@ import { Repository } from "typeorm"
 import { getRepositoryToken } from "@nestjs/typeorm"
 import { DatabaseService } from "../../../../database/database.service"
 import { User } from "../../../entities/user.entity"
-import { BuildAccessTokenService } from "../../../../authentication/services/buildAccessToken.service"
+import { BuildAccessTokenService } from "../../../../auth/services/buildAccessToken.service"
 
 describe("Users Controller", () => {
   let app: INestApplication

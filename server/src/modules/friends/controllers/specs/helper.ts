@@ -5,7 +5,7 @@ import { FriendRequest } from "../../../friendRequests/entities/friendRequest.en
 import { User } from "../../../users/entities/user.entity"
 import { Friend } from "../../entities/friend.entity"
 import { FriendsModule } from "../../friends.module"
-import { AuthenticationModule } from "../../../authentication/authentication.module"
+import { AuthModule } from "../../../auth/auth.module"
 import * as cookieParser from "cookie-parser"
 import { ConfigModule } from "@nestjs/config"
 
@@ -17,7 +17,7 @@ export async function bootstrapTestingModule(): Promise<TestingModule> {
         envFilePath: [".env.test"]
       }),
       DatabaseModule.forRoot(),
-      AuthenticationModule,
+      AuthModule,
       FriendsModule,
       DatabaseModule.forFeature([User, FriendRequest, Friend])
     ]

@@ -23,8 +23,8 @@ import { CreateUserDto } from "../../dto/createUser.dto"
 import { UpdateUserDto } from "../../dto/updateUser.dto"
 import { User } from "../../entities/user.entity"
 import { InjectRepository } from "@nestjs/typeorm"
-import { JwtGuard } from "../../../authentication/guards/jwtGuard"
-import { CurrentUser } from "../../../authentication/decorators/currentUser.decorator"
+import { JwtGuard } from "../../../auth/guards/jwtGuard"
+import { CurrentUser } from "../../../auth/decorators/currentUser.decorator"
 import { Repository } from "typeorm"
 
 @ApiTags("Users")

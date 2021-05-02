@@ -21,9 +21,9 @@ import { CreateFriendRequestService } from "../../services/friendRequests/create
 import { DeleteFriendRequestService } from "../../services/friendRequests/deleteFriendRequest.service"
 import { RetrieveFriendRequestsService } from "../../services/friendRequests/retrieveFriendRequests.service"
 import { CreateFriendRequestDto } from "../../dto/createFriendRequest.dto"
-import { JwtGuard } from "../../../authentication/guards/jwtGuard"
+import { JwtGuard } from "../../../auth/guards/jwtGuard"
 import { FriendRequest } from "../../entities/friendRequest.entity"
-import { RequestWithUser } from "../../../authentication/types/requestWithUser"
+import { RequestWithUser } from "../../../auth/types/requestWithUser"
 import { FriendRequestsGateway } from "../../gateways/friendRequests/friendRequests.gateway"
 
 @ApiTags("Friend Requests")

@@ -6,7 +6,7 @@ import { getRepositoryToken } from "@nestjs/typeorm"
 import { DatabaseService } from "../../../../database/database.service"
 import { User } from "../../../../users/entities/user.entity"
 import { FriendRequest } from "../../../entities/friendRequest.entity"
-import { BuildAccessTokenService } from "../../../../authentication/services/buildAccessToken.service"
+import { BuildAccessTokenService } from "../../../../auth/services/buildAccessToken.service"
 
 describe("FriendRequests Controller", () => {
   let app: INestApplication

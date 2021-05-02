@@ -9,7 +9,7 @@ import { User } from "../../../users/entities/user.entity"
 import { hash } from "bcrypt"
 import { RefreshTokenState } from "../../entities/refreshTokenState.entity"
 
-describe("Authentication Controller", () => {
+describe("Auth Controller", () => {
   let app: INestApplication
   let databaseService: DatabaseService
   let userRepository: Repository<User>

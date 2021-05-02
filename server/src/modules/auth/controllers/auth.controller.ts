@@ -26,9 +26,9 @@ import { BuildRefreshTokenService } from "../services/buildRefreshToken.service"
 import { BuildCookieWithCsrfTokenService } from "../services/buildCookieWithCsrfToken.service"
 import { BuildCsrfTokenService } from "../services/buildCsrfToken.service"
 
-@ApiTags("Authentication")
+@ApiTags("Auth")
 @Controller("auth")
-export class AuthenticationController {
+export class AuthController {
   constructor(
     @Inject(AuthenticateService)
     private readonly authenticateService: AuthenticateService,

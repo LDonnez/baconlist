@@ -5,7 +5,7 @@ import { PassportModule } from "@nestjs/passport"
 import { JwtModule } from "@nestjs/jwt"
 import { BuildCookieWithRefreshTokenService } from "./services/buildCookieWithRefreshToken.service"
 import { AuthenticateService } from "./services/authenticate.service"
-import { AuthenticationController } from "./controllers/authentication.controller"
+import { AuthController } from "./controllers/auth.controller"
 import { JwtStrategy } from "./strategies/jwt.strategy"
 import { DatabaseModule } from "../database/database.module"
 import { RefreshTokenState } from "./entities/refreshTokenState.entity"
@@ -38,7 +38,7 @@ import { BuildCsrfTokenService } from "./services/buildCsrfToken.service"
     }),
     DatabaseModule.forFeature([RefreshTokenState])
   ],
-  controllers: [AuthenticationController, RefreshTokenController],
+  controllers: [AuthController, RefreshTokenController],
   providers: [
     BuildCookieWithRefreshTokenService,
     AuthenticateService,
@@ -54,4 +54,4 @@ import { BuildCsrfTokenService } from "./services/buildCsrfToken.service"
   ],
   exports: [BuildAccessTokenService, JwtModule]
 })
-export class AuthenticationModule {}
+export class AuthModule {}

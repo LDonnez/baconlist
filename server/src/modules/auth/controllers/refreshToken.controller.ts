@@ -26,7 +26,7 @@ import { BuildCookieWithCsrfTokenService } from "../services/buildCookieWithCsrf
 import { BuildCsrfTokenService } from "../services/buildCsrfToken.service"
 import { CsrfGuard } from "../guards/csrfGuard"
 
-@ApiTags("Authentication")
+@ApiTags("Auth")
 @Controller("auth")
 @UseGuards(CsrfGuard)
 export class RefreshTokenController {

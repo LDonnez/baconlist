@@ -6,7 +6,7 @@ import { AppController } from "./app.controller"
 import { AppService } from "./app.service"
 import { UsersModule } from "../users/users.module"
 import { FriendRequestsModule } from "../friendRequests/friendRequests.module"
-import { AuthenticationModule } from "../authentication/authentication.module"
+import { AuthModule } from "../auth/auth.module"
 import { FriendsModule } from "../friends/friends.module"
 
 @Module({
@@ -23,7 +23,7 @@ import { FriendsModule } from "../friends/friends.module"
     UsersModule,
     FriendRequestsModule,
     FriendsModule,
-    AuthenticationModule
+    AuthModule
   ],
   controllers: [AppController],
   providers: [AppService]

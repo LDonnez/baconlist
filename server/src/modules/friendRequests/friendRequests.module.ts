@@ -9,13 +9,13 @@ import { RetrieveSendFriendRequestsService } from "./services/friendRequests/ret
 import { FriendRequestsController } from "./controllers/friendRequests/friendRequests.controller"
 import { FriendRequestsGateway } from "./gateways/friendRequests/friendRequests.gateway"
 import { ConfigModule } from "@nestjs/config"
-import { AuthenticationModule } from "../authentication/authentication.module"
+import { AuthModule } from "../auth/auth.module"
 
 @Module({
   imports: [
     ConfigModule,
     UsersModule,
-    AuthenticationModule,
+    AuthModule,
     DatabaseModule.forFeature([FriendRequest])
   ],
   controllers: [FriendRequestsController],

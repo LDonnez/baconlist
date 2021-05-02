@@ -1,8 +1,8 @@
 import { Test, TestingModule } from "@nestjs/testing"
-import { DatabaseModule } from "../../../../modules/database/database.module"
+import { DatabaseModule } from "../../../database/database.module"
 import { INestApplication } from "@nestjs/common"
 import { User } from "../../../users/entities/user.entity"
-import { AuthenticationModule } from "../../../authentication/authentication.module"
+import { AuthModule } from "../../auth.module"
 import * as cookieParser from "cookie-parser"
 import { ConfigModule } from "@nestjs/config"
 
@@ -14,7 +14,7 @@ export async function bootstrapTestingModule(): Promise<TestingModule> {
         envFilePath: [".env.test"]
       }),
       DatabaseModule.forRoot(),
-      AuthenticationModule,
+      AuthModule,
       DatabaseModule.forFeature([User])
     ]
   }).compile()

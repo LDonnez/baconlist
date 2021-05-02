@@ -9,12 +9,12 @@ import { DeleteFriendService } from "./services/friends/deleteFriend.service"
 import { FriendsController } from "./controllers/friends/friends.controller"
 import { ConfigModule } from "@nestjs/config"
 import { FriendsGateway } from "./gateways/friends/friends.gateway"
-import { AuthenticationModule } from "../authentication/authentication.module"
+import { AuthModule } from "../auth/auth.module"
 
 @Module({
   imports: [
     ConfigModule,
-    AuthenticationModule,
+    AuthModule,
     UsersModule,
     FriendRequestsModule,
     DatabaseModule.forFeature([Friend])
