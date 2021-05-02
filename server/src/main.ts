@@ -2,10 +2,26 @@ import { NestFactory } from "@nestjs/core"
 import { DocumentBuilder, SwaggerModule } from "@nestjs/swagger"
 import { AppModule } from "./modules/app/app.module"
 import * as cookieParser from "cookie-parser"
+import { UnauthorizedException } from "@nestjs/common"
 
 async function bootstrap(): Promise<void> {
   const app = await NestFactory.create(AppModule, {
-    cors: { origin: true, credentials: true }
+    cors: {
+      origin: function (
+        requestOrigin: string,
+        callback: (err: Error | null, allow?: boolean) => void
+      ): void {
+        if (
+          !requestOrigin ||
+          AppModule.allowedOrigins.includes(requestOrigin)
+        ) {
+          callback(null, true)
+        } else {
+          callback(new UnauthorizedException("not allowed"), false)
+        }
+      },
+      credentials: true
+    }
   })
   app.use(cookieParser())
 
