@@ -12,6 +12,9 @@ import { JwtModule } from "@nestjs/jwt"
 import { BuildRefreshTokenService } from "../buildRefreshToken.service"
 import { RefreshTokenService } from "../refreshToken.service"
 import { GetRefreshTokenStateByIdService } from "../getRefreshTokenStateById.service"
+import { BuildCookieWithCsrfTokenService } from "../buildCookieWithCsrfToken.service"
+import { BuildCsrfTokenService } from "../buildCsrfToken.service"
+import { VerifyCsrfTokenService } from "../verifyCsrfToken.service"
 
 export async function bootstrapTestingModule(): Promise<TestingModule> {
   return await Test.createTestingModule({
@@ -44,7 +47,10 @@ export async function bootstrapTestingModule(): Promise<TestingModule> {
       BuildAccessTokenService,
       BuildRefreshTokenService,
       GetRefreshTokenStateByIdService,
-      RefreshTokenService
+      BuildCookieWithCsrfTokenService,
+      RefreshTokenService,
+      BuildCsrfTokenService,
+      VerifyCsrfTokenService
     ]
   }).compile()
 }

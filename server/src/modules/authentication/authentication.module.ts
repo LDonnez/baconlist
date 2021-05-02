@@ -15,6 +15,9 @@ import { RefreshTokenController } from "./controllers/refreshToken.controller"
 import { GetRefreshTokenStateByIdService } from "./services/getRefreshTokenStateById.service"
 import { BuildRefreshTokenService } from "./services/buildRefreshToken.service"
 import { RefreshTokenService } from "./services/refreshToken.service"
+import { BuildCookieWithCsrfTokenService } from "./services/buildCookieWithCsrfToken.service"
+import { VerifyCsrfTokenService } from "./services/verifyCsrfToken.service"
+import { BuildCsrfTokenService } from "./services/buildCsrfToken.service"
 
 @Module({
   imports: [
@@ -44,7 +47,10 @@ import { RefreshTokenService } from "./services/refreshToken.service"
     BuildAccessTokenService,
     BuildRefreshTokenService,
     GetRefreshTokenStateByIdService,
-    RefreshTokenService
+    BuildCookieWithCsrfTokenService,
+    RefreshTokenService,
+    VerifyCsrfTokenService,
+    BuildCsrfTokenService
   ],
   exports: [BuildAccessTokenService, JwtModule]
 })
