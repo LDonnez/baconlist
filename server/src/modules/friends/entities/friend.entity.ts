@@ -22,14 +22,14 @@ export class Friend extends BaseEntity {
   @Index()
   @OneToOne(() => User, (user) => user.id)
   @JoinColumn({ name: "user_id", referencedColumnName: "id" })
-  @Column("uuid")
+  @Column("uuid", { name: "user_id" })
   public userId: string
 
   @ApiProperty({ type: User })
   @Index()
   @OneToOne(() => User, (user) => user.id)
   @JoinColumn({ name: "friend_id", referencedColumnName: "id" })
-  @Column("uuid")
+  @Column("uuid", { name: "friend_id" })
   public friendId: string
 
   @ApiProperty({ required: true })

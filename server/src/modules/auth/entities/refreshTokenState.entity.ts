@@ -19,7 +19,7 @@ export class RefreshTokenState extends BaseEntity {
   @Index()
   @ManyToOne(() => User, (user) => user.id)
   @JoinColumn({ name: "user_id", referencedColumnName: "id" })
-  @Column("uuid")
+  @Column("uuid", { name: "user_id" })
   public userId: string
 
   @Column("varchar", { name: "user_agent" })

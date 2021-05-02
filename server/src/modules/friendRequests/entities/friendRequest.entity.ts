@@ -22,14 +22,14 @@ export class FriendRequest extends BaseEntity {
   @Index()
   @OneToOne(() => User, (user) => user.id)
   @JoinColumn({ name: "receiver_id", referencedColumnName: "id" })
-  @Column("uuid")
+  @Column("uuid", { name: "receiver_id" })
   public receiverId: string
 
   @ApiProperty({ type: User })
   @Index()
   @OneToOne(() => User, (user) => user.id)
   @JoinColumn({ name: "requester_id", referencedColumnName: "id" })
-  @Column("uuid")
+  @Column("uuid", { name: "requester_id" })
   public requesterId: string
 
   @ApiProperty({ required: true })
