@@ -1,27 +1,18 @@
-import { Repository } from "typeorm"
-import { getRepositoryToken } from "@nestjs/typeorm"
 import { bootstrapTestingModule } from "./helper"
-import { DatabaseService } from "../../../database/database.service"
-import { User } from "../../../users/entities/user.entity"
-import { RefreshTokenState } from "../../entities/refreshTokenState.entity"
+import { PrismaService } from "../../../prisma/prisma.service"
 import { GetRefreshTokenStateByIdService } from "../getRefreshTokenStateById.service"
+import { UnauthorizedException } from "@nestjs/common"
 
 describe("GetRefreshTokenStateByIdService", () => {
-  let databaseService: DatabaseService
-  let userRepository: Repository<User>
-  let refreshTokenStateRepository: Repository<RefreshTokenState>
+  let prismaService: PrismaService
   let getRefreshTokenStateByIdService: GetRefreshTokenStateByIdService
 
   beforeAll(async () => {
     const module = await bootstrapTestingModule()
-    databaseService = module.get<DatabaseService>(DatabaseService)
-    userRepository = module.get<Repository<User>>(getRepositoryToken(User))
+    prismaService = module.get<PrismaService>(PrismaService)
     getRefreshTokenStateByIdService = module.get<
       GetRefreshTokenStateByIdService
     >(GetRefreshTokenStateByIdService)
-    refreshTokenStateRepository = module.get<Repository<RefreshTokenState>>(
-      getRepositoryToken(RefreshTokenState)
-    )
   })
 
   it("should be defined", () => {
@@ -29,16 +20,20 @@ describe("GetRefreshTokenStateByIdService", () => {
   })
 
   it("should successfully get a refresh token state by id", async () => {
-    const user = await userRepository.save({
-      firstName: "test",
-      lastName: "test",
-      email: "test@test.com",
-      password: "test"
+    const user = await prismaService.user.create({
+      data: {
+        firstName: "test",
+        lastName: "test",
+        email: "test@test.com",
+        password: "test"
+      }
     })
-    const refreshTokenState = await refreshTokenStateRepository.save({
-      userId: user.id,
-      revoked: false,
-      userAgent: "test"
+    const refreshTokenState = await prismaService.refreshTokenState.create({
+      data: {
+        userId: user.id,
+        revoked: false,
+        userAgent: "test"
+      }
     })
 
     const result = await getRefreshTokenStateByIdService.execute(
@@ -48,21 +43,18 @@ describe("GetRefreshTokenStateByIdService", () => {
   })
 
   it("should not get a refresh token state by id because it does not exist", async () => {
-    try {
-      const result = await getRefreshTokenStateByIdService.execute(
+    await expect(
+      getRefreshTokenStateByIdService.execute(
         "69166027-ba03-40ac-8e31-bc12091eeb2f"
       )
-      expect(result).toBeUndefined()
-    } catch (error) {
-      expect(error).toBeDefined()
-    }
+    ).rejects.toThrowError(UnauthorizedException)
   })
 
   afterEach(async () => {
-    await databaseService.cleanAll()
+    await prismaService.cleanAll()
   })
 
   afterAll(async () => {
-    await databaseService.closeConnection()
+    await prismaService.closeConnection()
   })
 })

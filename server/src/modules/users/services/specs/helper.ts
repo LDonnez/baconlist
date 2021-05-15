@@ -1,27 +1,25 @@
 import { TestingModule, Test } from "@nestjs/testing"
-import { DatabaseModule } from "../../../../modules/database/database.module"
-import { DatabaseService } from "../../../database/database.service"
-import { User } from "../../entities/user.entity"
 import { CreateUserService } from "../users/createUser.service"
-import { GetUserByEmailService } from "../users/getUserByEmail.service"
 import { ConfigModule } from "@nestjs/config"
+import { PrismaModule } from "../../../prisma/prisma.module"
 import { GetUserByIdService } from "../users/getUserById.service"
+import { UpdateUserService } from "../users/updateUser.service"
+import { GetUserByEmailService } from "../users/getUserByEmail.service"
 
 export async function bootstrapTestingModule(): Promise<TestingModule> {
   return await Test.createTestingModule({
     imports: [
+      PrismaModule,
       ConfigModule.forRoot({
         isGlobal: true,
         envFilePath: [".env.test"]
-      }),
-      DatabaseModule.forRoot(),
-      DatabaseModule.forFeature([User])
+      })
     ],
     providers: [
       CreateUserService,
+      GetUserByIdService,
       GetUserByEmailService,
-      DatabaseService,
-      GetUserByIdService
+      UpdateUserService
     ]
   }).compile()
 }

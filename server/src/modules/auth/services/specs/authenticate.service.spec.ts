@@ -1,20 +1,16 @@
-import { Repository } from "typeorm"
-import { getRepositoryToken } from "@nestjs/typeorm"
 import { bootstrapTestingModule } from "./helper"
-import { DatabaseService } from "../../../database/database.service"
-import { User } from "../../../users/entities/user.entity"
+import { PrismaService } from "../../../prisma/prisma.service"
 import { hash } from "bcrypt"
 import { AuthenticateService } from "../authenticate.service"
+import { UnauthorizedException } from "@nestjs/common"
 
 describe("AuthenticateService", () => {
-  let databaseService: DatabaseService
-  let userRepository: Repository<User>
+  let prismaService: PrismaService
   let authenticateService: AuthenticateService
 
   beforeAll(async () => {
     const module = await bootstrapTestingModule()
-    databaseService = module.get<DatabaseService>(DatabaseService)
-    userRepository = module.get<Repository<User>>(getRepositoryToken(User))
+    prismaService = module.get<PrismaService>(PrismaService)
     authenticateService = module.get<AuthenticateService>(AuthenticateService)
   })
 
@@ -23,11 +19,13 @@ describe("AuthenticateService", () => {
   })
 
   it("should successfully authenticate the user", async () => {
-    await userRepository.save({
-      firstName: "test",
-      lastName: "test",
-      email: "test@test.com",
-      password: await hash("test", 10)
+    await prismaService.user.create({
+      data: {
+        firstName: "test",
+        lastName: "test",
+        email: "test@test.com",
+        password: await hash("test", 10)
+      }
     })
 
     const result = await authenticateService.execute({
@@ -38,46 +36,44 @@ describe("AuthenticateService", () => {
   })
 
   it("should fail authenticating the user because password is wrong", async () => {
-    await userRepository.save({
-      firstName: "test",
-      lastName: "test",
-      email: "test@test.com",
-      password: await hash("test", 10)
+    await prismaService.user.create({
+      data: {
+        firstName: "test",
+        lastName: "test",
+        email: "test@test.com",
+        password: await hash("test", 10)
+      }
     })
-    try {
-      const result = await authenticateService.execute({
+    await expect(
+      authenticateService.execute({
         email: "test@test.com",
         password: "wrong"
       })
-      expect(result).toBeUndefined()
-    } catch (e) {
-      expect(e).toBeDefined()
-    }
+    ).rejects.toThrowError(UnauthorizedException)
   })
 
   it("should fail authenticating the user because user with that email is not found", async () => {
-    await userRepository.save({
-      firstName: "test",
-      lastName: "test",
-      email: "test@test.com",
-      password: await hash("test", 10)
+    await prismaService.user.create({
+      data: {
+        firstName: "test",
+        lastName: "test",
+        email: "test@test.com",
+        password: await hash("test", 10)
+      }
     })
-    try {
-      const result = await authenticateService.execute({
+    await expect(
+      authenticateService.execute({
         email: "notfound@test.com",
         password: "test"
       })
-      expect(result).toBeUndefined()
-    } catch (e) {
-      expect(e).toBeDefined()
-    }
+    ).rejects.toThrowError(UnauthorizedException)
   })
 
   afterEach(async () => {
-    await databaseService.cleanAll()
+    await prismaService.cleanAll()
   })
 
   afterAll(async () => {
-    await databaseService.closeConnection()
+    await prismaService.closeConnection()
   })
 })

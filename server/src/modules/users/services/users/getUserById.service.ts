@@ -1,20 +1,29 @@
-import { Injectable, NotFoundException } from "@nestjs/common"
-import { InjectRepository } from "@nestjs/typeorm"
-import { Repository } from "typeorm"
-import { User } from "../../entities/user.entity"
+import { Inject, Injectable, NotFoundException } from "@nestjs/common"
+import { PrismaService } from "../../../prisma/prisma.service"
+import { UserDto } from "../../dto/user.dto"
 
 @Injectable()
 export class GetUserByIdService {
   constructor(
-    @InjectRepository(User) private readonly userRepository: Repository<User>
+    @Inject(PrismaService) private readonly prismaService: PrismaService
   ) {}
 
-  public async execute(id: string): Promise<User> {
-    const user = await this.userRepository.findOne({ id })
+  public async execute(id: string): Promise<UserDto> {
+    const user = await this.prismaService.user.findFirst({
+      where: { id },
+      select: {
+        id: true,
+        firstName: true,
+        lastName: true,
+        email: true,
+        password: false,
+        createdAt: true,
+        updatedAt: true
+      }
+    })
     if (!user) {
       throw new NotFoundException(`user with id: ${id} does not exist`)
     }
-    delete user.password
     return user
   }
 }

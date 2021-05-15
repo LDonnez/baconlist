@@ -1,26 +1,17 @@
-import { Repository } from "typeorm"
-import { getRepositoryToken } from "@nestjs/typeorm"
 import { bootstrapTestingModule } from "./helper"
-import { DatabaseService } from "../../../database/database.service"
-import { User } from "../../../users/entities/user.entity"
-import { RefreshTokenState } from "../../entities/refreshTokenState.entity"
+import { PrismaService } from "../../../prisma/prisma.service"
 import { BuildCookieWithRefreshTokenService } from "../buildCookieWithRefreshToken.service"
 import { BuildRefreshTokenService } from "../buildRefreshToken.service"
 
 describe("BuildCookieWithRefreshTokenService", () => {
-  let databaseService: DatabaseService
-  let userRepository: Repository<User>
-  let refreshTokenStateRepository: Repository<RefreshTokenState>
+  let prismaService: PrismaService
   let buildCookieWithRefreshTokenService: BuildCookieWithRefreshTokenService
   let buildRefreshTokenService: BuildRefreshTokenService
 
   beforeAll(async () => {
     const module = await bootstrapTestingModule()
-    databaseService = module.get<DatabaseService>(DatabaseService)
-    userRepository = module.get<Repository<User>>(getRepositoryToken(User))
-    refreshTokenStateRepository = module.get<Repository<RefreshTokenState>>(
-      getRepositoryToken(RefreshTokenState)
-    )
+    prismaService = module.get<PrismaService>(PrismaService)
+
     buildRefreshTokenService = module.get<BuildRefreshTokenService>(
       BuildRefreshTokenService
     )
@@ -34,17 +25,21 @@ describe("BuildCookieWithRefreshTokenService", () => {
   })
 
   it("should successfully build a cookie with a refresh token", async () => {
-    const user = await userRepository.save({
-      firstName: "test",
-      lastName: "test",
-      email: "test@test.com",
-      password: "test"
+    const user = await prismaService.user.create({
+      data: {
+        firstName: "test",
+        lastName: "test",
+        email: "test@test.com",
+        password: "test"
+      }
     })
 
-    const refreshTokenState = await refreshTokenStateRepository.save({
-      userId: user.id,
-      userAgent: "test",
-      revoked: false
+    const refreshTokenState = await prismaService.refreshTokenState.create({
+      data: {
+        userId: user.id,
+        userAgent: "test",
+        revoked: false
+      }
     })
 
     const refreshToken = await buildRefreshTokenService.execute(
@@ -56,10 +51,10 @@ describe("BuildCookieWithRefreshTokenService", () => {
   })
 
   afterEach(async () => {
-    await databaseService.cleanAll()
+    await prismaService.cleanAll()
   })
 
   afterAll(async () => {
-    await databaseService.closeConnection()
+    await prismaService.closeConnection()
   })
 })

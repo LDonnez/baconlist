@@ -20,9 +20,8 @@ import {
 import { CreateFriendService } from "../../services/friends/createFriend.service"
 import { DeleteFriendService } from "../../services/friends/deleteFriend.service"
 import { RetrieveFriendsService } from "../../services/friends/retrieveFriends.service"
-import { CreateFriendDto } from "../../dto/createFriend.dto"
+import { CreateFriendDto, FriendDto } from "../../dto/friend.dto"
 import { JwtGuard } from "../../../auth/guards/jwtGuard"
-import { Friend } from "../../entities/friend.entity"
 import { RequestWithUser } from "../../../auth/types/requestWithUser"
 import { FriendsGateway } from "../../gateways/friends/friends.gateway"
 
@@ -41,14 +40,17 @@ export class FriendsController {
   ) {}
 
   @ApiOperation({ description: "creates a new friend" })
-  @ApiOkResponse({ description: "friend successfully created", type: Friend })
+  @ApiOkResponse({
+    description: "friend successfully created",
+    type: FriendDto
+  })
   @ApiBadRequestResponse({ description: "invalid data provided" })
   @UsePipes(new ValidationPipe())
   @Post()
   public async create(
     @Req() request: RequestWithUser,
     @Body() friendData: CreateFriendDto
-  ): Promise<Friend> {
+  ): Promise<FriendDto> {
     const userId = request.user.id
     const result = await this.createFriendService.execute(userId, friendData)
     await this.friendsGateway.refresh(userId)
@@ -57,22 +59,25 @@ export class FriendsController {
   }
 
   @ApiOperation({ description: "returns all friends from user" })
-  @ApiOkResponse({ description: "success", type: Friend, isArray: true })
+  @ApiOkResponse({ description: "success", type: FriendDto, isArray: true })
   @Get()
-  public async index(@Req() request: RequestWithUser): Promise<Friend[]> {
+  public async index(@Req() request: RequestWithUser): Promise<FriendDto[]> {
     const userId = request.user.id
     return await this.retrieveFriendsService.execute(userId)
   }
 
   @ApiOperation({ description: "deletes a friend" })
-  @ApiOkResponse({ description: "friend successfully deleted", type: Friend })
+  @ApiOkResponse({
+    description: "friend successfully deleted",
+    type: FriendDto
+  })
   @ApiBadRequestResponse({ description: "invalid data provided" })
   @UsePipes(new ValidationPipe())
   @Delete("/:id")
   public async delete(
     @Req() request: RequestWithUser,
     @Param("id") id: string
-  ): Promise<Friend | undefined> {
+  ): Promise<FriendDto | undefined> {
     const userId = request.user.id
     const result = await this.deleteFriendService.execute(userId, id)
     await this.friendsGateway.refresh(userId)

@@ -1,24 +1,15 @@
-import { Repository } from "typeorm"
-import { getRepositoryToken } from "@nestjs/typeorm"
 import { bootstrapTestingModule } from "../helper"
-import { DatabaseService } from "../../../../database/database.service"
 import { CreateFriendRequestService } from "../../friendRequests/createFriendRequest.service"
-import { FriendRequest } from "../../../entities/friendRequest.entity"
-import { User } from "../../../../users/entities/user.entity"
+import { PrismaService } from "../../../../prisma/prisma.service"
+import { BadRequestException } from "@nestjs/common"
 
 describe("CreateFriendRequestService", () => {
-  let databaseService: DatabaseService
-  let friendRequestRepository: Repository<FriendRequest>
-  let userRepository: Repository<User>
+  let prismaService: PrismaService
   let createFriendRequestService: CreateFriendRequestService
 
   beforeAll(async () => {
     const module = await bootstrapTestingModule()
-    databaseService = module.get<DatabaseService>(DatabaseService)
-    userRepository = module.get<Repository<User>>(getRepositoryToken(User))
-    friendRequestRepository = module.get<Repository<FriendRequest>>(
-      getRepositoryToken(FriendRequest)
-    )
+    prismaService = module.get<PrismaService>(PrismaService)
     createFriendRequestService = module.get<CreateFriendRequestService>(
       CreateFriendRequestService
     )
@@ -29,17 +20,21 @@ describe("CreateFriendRequestService", () => {
   })
 
   it("should successfully create a friend request", async () => {
-    const user = await userRepository.save({
-      firstName: "test",
-      lastName: "test",
-      email: "test@test.com",
-      password: "test"
+    const user = await prismaService.user.create({
+      data: {
+        firstName: "test",
+        lastName: "test",
+        email: "test@test.com",
+        password: "test"
+      }
     })
-    const friend = await userRepository.save({
-      firstName: "test2",
-      lastName: "test2",
-      email: "test2@test.com",
-      password: "test"
+    const friend = await prismaService.user.create({
+      data: {
+        firstName: "test2",
+        lastName: "test2",
+        email: "test2@test.com",
+        password: "test"
+      }
     })
     const result = await createFriendRequestService.execute(user.id, {
       receiverId: friend.id
@@ -47,38 +42,71 @@ describe("CreateFriendRequestService", () => {
     expect(result).toBeDefined()
   })
 
-  it("throws an error because a friend reqeust already exists with that receiver_id", async () => {
-    const user = await userRepository.save({
-      firstName: "test",
-      lastName: "test",
-      email: "test@test.com",
-      password: "test"
+  it("throws an error because a friend request already exists with that receiver_id", async () => {
+    const user = await prismaService.user.create({
+      data: {
+        firstName: "test",
+        lastName: "test",
+        email: "test@test.com",
+        password: "test"
+      }
     })
-    const friend = await userRepository.save({
-      firstName: "test2",
-      lastName: "test2",
-      email: "test2@test.com",
-      password: "test"
+    const friend = await prismaService.user.create({
+      data: {
+        firstName: "test2",
+        lastName: "test2",
+        email: "test2@test.com",
+        password: "test"
+      }
     })
-    await friendRequestRepository.save({
-      receiverId: friend.id,
-      requesterId: user.id
+    await prismaService.friendRequest.create({
+      data: {
+        receiverId: friend.id,
+        requesterId: user.id
+      }
     })
-    try {
-      const result = await createFriendRequestService.execute(user.id, {
+    await expect(
+      createFriendRequestService.execute(user.id, {
         receiverId: friend.id
       })
-      expect(result).toBeUndefined()
-    } catch (error) {
-      expect(error).toBeDefined()
-    }
+    ).rejects.toThrowError(BadRequestException)
+  })
+
+  it("throws an error because a friend already exists with that userId", async () => {
+    const user = await prismaService.user.create({
+      data: {
+        firstName: "test",
+        lastName: "test",
+        email: "test@test.com",
+        password: "test"
+      }
+    })
+    const friend = await prismaService.user.create({
+      data: {
+        firstName: "test2",
+        lastName: "test2",
+        email: "test2@test.com",
+        password: "test"
+      }
+    })
+    await prismaService.friend.create({
+      data: {
+        userId: user.id,
+        friendId: friend.id
+      }
+    })
+    await expect(
+      createFriendRequestService.execute(user.id, {
+        receiverId: friend.id
+      })
+    ).rejects.toThrowError(BadRequestException)
   })
 
   afterEach(async () => {
-    await databaseService.cleanAll()
+    await prismaService.cleanAll()
   })
 
   afterAll(async () => {
-    await databaseService.closeConnection()
+    await prismaService.closeConnection()
   })
 })

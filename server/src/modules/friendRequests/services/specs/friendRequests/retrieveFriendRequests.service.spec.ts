@@ -1,24 +1,14 @@
-import { Repository } from "typeorm"
-import { getRepositoryToken } from "@nestjs/typeorm"
 import { bootstrapTestingModule } from "../helper"
-import { DatabaseService } from "../../../../database/database.service"
 import { RetrieveFriendRequestsService } from "../../friendRequests/retrieveFriendRequests.service"
-import { FriendRequest } from "../../../entities/friendRequest.entity"
-import { User } from "../../../../users/entities/user.entity"
+import { PrismaService } from "../../../../prisma/prisma.service"
 
 describe("RetrieveFriendRequestsService", () => {
-  let databaseService: DatabaseService
-  let friendRequestRepository: Repository<FriendRequest>
-  let userRepository: Repository<User>
+  let prismaService: PrismaService
   let retrieveFriendRequestsService: RetrieveFriendRequestsService
 
   beforeAll(async () => {
     const module = await bootstrapTestingModule()
-    databaseService = module.get<DatabaseService>(DatabaseService)
-    userRepository = module.get<Repository<User>>(getRepositoryToken(User))
-    friendRequestRepository = module.get<Repository<FriendRequest>>(
-      getRepositoryToken(FriendRequest)
-    )
+    prismaService = module.get<PrismaService>(PrismaService)
     retrieveFriendRequestsService = module.get<RetrieveFriendRequestsService>(
       RetrieveFriendRequestsService
     )
@@ -29,31 +19,37 @@ describe("RetrieveFriendRequestsService", () => {
   })
 
   it("should successfully retrieve friend requests", async () => {
-    const receiver = await userRepository.save({
-      firstName: "test",
-      lastName: "test",
-      email: "test@test.com",
-      password: "test"
+    const receiver = await prismaService.user.create({
+      data: {
+        firstName: "test",
+        lastName: "test",
+        email: "test@test.com",
+        password: "test"
+      }
     })
-    const requester = await userRepository.save({
-      firstName: "test2",
-      lastName: "test2",
-      email: "test2@test.com",
-      password: "test"
+    const requester = await prismaService.user.create({
+      data: {
+        firstName: "test2",
+        lastName: "test2",
+        email: "test2@test.com",
+        password: "test"
+      }
     })
-    await friendRequestRepository.save({
-      receiverId: receiver.id,
-      requesterId: requester.id
+    await prismaService.friendRequest.create({
+      data: {
+        receiverId: receiver.id,
+        requesterId: requester.id
+      }
     })
     const result = await retrieveFriendRequestsService.execute(receiver.id)
     expect(result).toHaveLength(1)
   })
 
   afterEach(async () => {
-    await databaseService.cleanAll()
+    await prismaService.cleanAll()
   })
 
   afterAll(async () => {
-    await databaseService.closeConnection()
+    await prismaService.closeConnection()
   })
 })

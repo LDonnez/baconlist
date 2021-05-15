@@ -1,6 +1,4 @@
 import { Module } from "@nestjs/common"
-import { FriendRequest } from "./entities/friendRequest.entity"
-import { DatabaseModule } from "../database/database.module"
 import { CreateFriendRequestService } from "./services/friendRequests/createFriendRequest.service"
 import { RetrieveFriendRequestsService } from "./services/friendRequests/retrieveFriendRequests.service"
 import { UsersModule } from "../users/users.module"
@@ -10,14 +8,10 @@ import { FriendRequestsController } from "./controllers/friendRequests/friendReq
 import { FriendRequestsGateway } from "./gateways/friendRequests/friendRequests.gateway"
 import { ConfigModule } from "@nestjs/config"
 import { AuthModule } from "../auth/auth.module"
+import { PrismaModule } from "../prisma/prisma.module"
 
 @Module({
-  imports: [
-    ConfigModule,
-    UsersModule,
-    AuthModule,
-    DatabaseModule.forFeature([FriendRequest])
-  ],
+  imports: [ConfigModule, UsersModule, AuthModule, PrismaModule],
   controllers: [FriendRequestsController],
   providers: [
     CreateFriendRequestService,
@@ -25,7 +19,6 @@ import { AuthModule } from "../auth/auth.module"
     DeleteFriendRequestService,
     RetrieveSendFriendRequestsService,
     FriendRequestsGateway
-  ],
-  exports: [DatabaseModule]
+  ]
 })
 export class FriendRequestsModule {}

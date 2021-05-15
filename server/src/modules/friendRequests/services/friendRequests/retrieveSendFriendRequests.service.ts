@@ -1,28 +1,43 @@
-import { Injectable } from "@nestjs/common"
-import { InjectRepository } from "@nestjs/typeorm"
-import { Repository } from "typeorm"
-import { FriendRequest } from "../../entities/friendRequest.entity"
+import { Inject, Injectable } from "@nestjs/common"
+import { PrismaService } from "../../../prisma/prisma.service"
+import { FriendRequest } from "@prisma/client"
 
 @Injectable()
 export class RetrieveSendFriendRequestsService {
   constructor(
-    @InjectRepository(FriendRequest)
-    private readonly friendRequestRepository: Repository<FriendRequest>
+    @Inject(PrismaService)
+    private readonly prismaService: PrismaService
   ) {}
 
   public async execute(userId: string): Promise<FriendRequest[]> {
-    const q = this.friendRequestRepository
-      .createQueryBuilder("friend_request")
-      .select("friend_request.id", "id")
-      .addSelect("receiver.first_name", "firstName")
-      .addSelect("receiver.last_name", "lastName")
-      .addSelect("receiver.id", "friendId")
-      .innerJoin(
-        "users",
-        "receiver",
-        "receiver.id = friend_request.receiver_id"
-      )
-      .where("friend_request.requester_id = :userId", { userId })
-    return await q.getRawMany()
+    return await this.prismaService.friendRequest.findMany({
+      where: {
+        requesterId: userId
+      },
+      include: {
+        requester: {
+          select: {
+            id: true,
+            firstName: true,
+            lastName: true,
+            email: true,
+            updatedAt: true,
+            createdAt: true,
+            password: false
+          }
+        },
+        receiver: {
+          select: {
+            id: true,
+            firstName: true,
+            lastName: true,
+            email: true,
+            updatedAt: true,
+            createdAt: true,
+            password: false
+          }
+        }
+      }
+    })
   }
 }

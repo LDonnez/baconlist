@@ -1,13 +1,13 @@
 import { Module } from "@nestjs/common"
 import { ConfigModule } from "@nestjs/config"
 import { ConfigService } from "@nestjs/config"
-import { DatabaseModule } from "../database/database.module"
 import { AppController } from "./app.controller"
 import { AppService } from "./app.service"
 import { UsersModule } from "../users/users.module"
 import { FriendRequestsModule } from "../friendRequests/friendRequests.module"
 import { AuthModule } from "../auth/auth.module"
 import { FriendsModule } from "../friends/friends.module"
+import { PrismaModule } from "../prisma/prisma.module"
 
 @Module({
   imports: [
@@ -19,7 +19,7 @@ import { FriendsModule } from "../friends/friends.module"
         abortEarly: true
       }
     }),
-    DatabaseModule.forRoot(),
+    PrismaModule,
     UsersModule,
     FriendRequestsModule,
     FriendsModule,

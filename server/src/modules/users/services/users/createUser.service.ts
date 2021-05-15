@@ -1,35 +1,42 @@
-import { Injectable, BadRequestException } from "@nestjs/common"
-import { InjectRepository } from "@nestjs/typeorm"
-import { Repository } from "typeorm"
-import { User } from "../../entities/user.entity"
+import { Injectable, BadRequestException, Inject } from "@nestjs/common"
 import { hash } from "bcrypt"
-import { CreateUserDto } from "../../dto/createUser.dto"
+import { CreateUserDto } from "../../dto/user.dto"
+import { PrismaService } from "../../../prisma/prisma.service"
+import { UserDto } from "../../dto/user.dto"
 
 @Injectable()
 export class CreateUserService {
   constructor(
-    @InjectRepository(User) private readonly userRepository: Repository<User>
+    @Inject(PrismaService) private readonly prismaService: PrismaService
   ) {}
 
-  public async execute(userData: CreateUserDto): Promise<User> {
+  public async execute(userData: CreateUserDto): Promise<UserDto> {
     if (await this.alreadyExists(userData)) {
       throw new BadRequestException(
         `user with email: ${userData.email} already exists `
       )
     }
-    const newUser = await this.buildUser(userData)
-    const result = await this.userRepository.save(newUser)
-    delete result.password
-    return result
+    return await this.createUser(userData)
   }
 
-  private async buildUser(userData: CreateUserDto): Promise<User> {
-    const user = new User()
-    user.firstName = userData.firstName
-    user.lastName = userData.lastName
-    user.email = userData.email
-    user.password = await this.hashPassword(userData.password)
-    return user
+  private async createUser(userData: CreateUserDto): Promise<UserDto> {
+    return await this.prismaService.user.create({
+      data: {
+        firstName: userData.firstName,
+        lastName: userData.lastName,
+        email: userData.email,
+        password: await this.hashPassword(userData.password)
+      },
+      select: {
+        id: true,
+        firstName: true,
+        lastName: true,
+        email: true,
+        password: false,
+        createdAt: true,
+        updatedAt: true
+      }
+    })
   }
 
   private async hashPassword(password: string): Promise<string> {
@@ -37,7 +44,9 @@ export class CreateUserService {
   }
 
   private async alreadyExists(userData: CreateUserDto): Promise<boolean> {
-    const user = await this.userRepository.findOne({ email: userData.email })
+    const user = await this.prismaService.user.findFirst({
+      where: { email: userData.email }
+    })
     if (!user) {
       return false
     }

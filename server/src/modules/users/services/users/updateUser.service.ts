@@ -1,23 +1,35 @@
-import { Injectable, Inject } from "@nestjs/common"
-import { User } from "../../entities/user.entity"
-import { UpdateUserDto } from "../../dto/updateUser.dto"
-import { GetUserByIdService } from "./getUserById.service"
+import { Injectable, Inject, BadRequestException } from "@nestjs/common"
+import { UpdateUserDto, UserDto } from "../../dto/user.dto"
+import { PrismaService } from "../../../prisma/prisma.service"
 
 @Injectable()
 export class UpdateUserService {
   constructor(
-    @Inject(GetUserByIdService)
-    private readonly getUserByIdService: GetUserByIdService
+    @Inject(PrismaService) private readonly prismaService: PrismaService
   ) {}
 
-  public async execute(id: string, userData: UpdateUserDto): Promise<User> {
-    const user = await this.getUserById(id)
-    user.firstName = userData.firstName
-    user.lastName = userData.lastName
-    return await user.save()
-  }
-
-  private async getUserById(id: string): Promise<User> {
-    return await this.getUserByIdService.execute(id)
+  public async execute(id: string, userData: UpdateUserDto): Promise<UserDto> {
+    try {
+      return await this.prismaService.user.update({
+        where: {
+          id
+        },
+        data: {
+          ...userData,
+          updatedAt: new Date().toISOString()
+        },
+        select: {
+          id: true,
+          firstName: true,
+          lastName: true,
+          email: true,
+          password: false,
+          createdAt: true,
+          updatedAt: true
+        }
+      })
+    } catch (error) {
+      throw new BadRequestException(`user with id: ${id} not found`)
+    }
   }
 }

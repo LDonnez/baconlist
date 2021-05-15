@@ -1,49 +1,88 @@
-import { Injectable, BadRequestException } from "@nestjs/common"
-import { InjectRepository } from "@nestjs/typeorm"
-import { Repository } from "typeorm"
-import { FriendRequest } from "../../entities/friendRequest.entity"
-import { CreateFriendRequestDto } from "../../dto/createFriendRequest.dto"
+import { Injectable, BadRequestException, Inject } from "@nestjs/common"
+import {
+  CreateFriendRequestDto,
+  FriendRequestDto
+} from "../../dto/friendRequest.dto"
+import { PrismaService } from "../../../prisma/prisma.service"
 
 @Injectable()
 export class CreateFriendRequestService {
   constructor(
-    @InjectRepository(FriendRequest)
-    private readonly friendRequestRepository: Repository<FriendRequest>
+    @Inject(PrismaService)
+    private readonly prismaService: PrismaService
   ) {}
 
   public async execute(
     userId: string,
     friendRequestData: CreateFriendRequestDto
-  ): Promise<FriendRequest> {
-    if (await this.alreadyExists(userId, friendRequestData)) {
+  ): Promise<FriendRequestDto> {
+    if (await this.requestAlreadyExists(userId, friendRequestData)) {
       throw new BadRequestException(
-        `friend request with friendId: ${friendRequestData.receiverId} already exists `
+        `friend request with userId: ${friendRequestData.receiverId} already exists `
       )
     }
-    const newFriendRequest = this.buildFriendRequest(userId, friendRequestData)
-    const result = await this.friendRequestRepository.save(newFriendRequest)
-    return result
+
+    if (await this.friendAlreadyExists(userId, friendRequestData)) {
+      throw new BadRequestException(
+        `friend with userId: ${friendRequestData.receiverId} already exists `
+      )
+    }
+    return await this.prismaService.friendRequest.create({
+      data: { requesterId: userId, receiverId: friendRequestData.receiverId },
+      include: {
+        requester: {
+          select: {
+            id: true,
+            firstName: true,
+            lastName: true,
+            email: true,
+            updatedAt: true,
+            createdAt: true,
+            password: false
+          }
+        },
+        receiver: {
+          select: {
+            id: true,
+            firstName: true,
+            lastName: true,
+            email: true,
+            updatedAt: true,
+            createdAt: true,
+            password: false
+          }
+        }
+      }
+    })
   }
 
-  private buildFriendRequest(
-    userId: string,
-    friendRequestData: CreateFriendRequestDto
-  ): FriendRequest {
-    const friendRequest = new FriendRequest()
-    friendRequest.requesterId = userId
-    friendRequest.receiverId = friendRequestData.receiverId
-    return friendRequest
-  }
-
-  private async alreadyExists(
+  private async requestAlreadyExists(
     userId: string,
     friendRequestData: CreateFriendRequestDto
   ): Promise<boolean> {
-    const friendRequest = await this.friendRequestRepository.findOne({
-      receiverId: friendRequestData.receiverId,
-      requesterId: userId
+    const friendRequest = await this.prismaService.friendRequest.findFirst({
+      where: {
+        receiverId: friendRequestData.receiverId,
+        requesterId: userId
+      }
     })
     if (!friendRequest) {
+      return false
+    }
+    return true
+  }
+
+  private async friendAlreadyExists(
+    userId: string,
+    friendRequestData: CreateFriendRequestDto
+  ): Promise<boolean> {
+    const friend = await this.prismaService.friend.findFirst({
+      where: {
+        userId,
+        friendId: friendRequestData.receiverId
+      }
+    })
+    if (!friend) {
       return false
     }
     return true

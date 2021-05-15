@@ -1,7 +1,7 @@
 import { Inject, Injectable } from "@nestjs/common"
 import { ConfigService } from "@nestjs/config"
 import { JwtService } from "@nestjs/jwt"
-import { RefreshTokenState } from "../entities/refreshTokenState.entity"
+import { RefreshTokenState } from "@prisma/client"
 
 @Injectable()
 export class BuildRefreshTokenService {

@@ -1,18 +1,28 @@
-import { Injectable, BadRequestException } from "@nestjs/common"
-import { InjectRepository } from "@nestjs/typeorm"
-import { Repository } from "typeorm"
-import { User } from "../../entities/user.entity"
+import { Injectable, Inject, NotFoundException } from "@nestjs/common"
+import { PrismaService } from "../../../prisma/prisma.service"
+import { User } from "@prisma/client"
 
 @Injectable()
 export class GetUserByEmailService {
   constructor(
-    @InjectRepository(User) private readonly userRepository: Repository<User>
+    @Inject(PrismaService) private readonly prismaService: PrismaService
   ) {}
 
   public async execute(email: string): Promise<User> {
-    const user = await this.userRepository.findOne({ email })
+    const user = await this.prismaService.user.findFirst({
+      where: { email },
+      select: {
+        id: true,
+        firstName: true,
+        lastName: true,
+        email: true,
+        password: true,
+        createdAt: true,
+        updatedAt: true
+      }
+    })
     if (!user) {
-      throw new BadRequestException(`user with email: ${email} does not exist`)
+      throw new NotFoundException(`user with email: ${email} does not exist`)
     }
     return user
   }

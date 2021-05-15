@@ -1,18 +1,12 @@
 import * as request from "supertest"
 import { INestApplication } from "@nestjs/common"
 import { bootstrapTestApp, bootstrapTestingModule } from "../helper"
-import { Repository } from "typeorm"
-import { getRepositoryToken } from "@nestjs/typeorm"
-import { DatabaseService } from "../../../../database/database.service"
-import { User } from "../../../../users/entities/user.entity"
-import { FriendRequest } from "../../../entities/friendRequest.entity"
 import { BuildAccessTokenService } from "../../../../auth/services/buildAccessToken.service"
+import { PrismaService } from "../../../../prisma/prisma.service"
 
 describe("FriendRequests Controller", () => {
   let app: INestApplication
-  let databaseService: DatabaseService
-  let userRepository: Repository<User>
-  let friendRequestRepository: Repository<FriendRequest>
+  let prismaService: PrismaService
   let buildAccessTokenFromUserService: BuildAccessTokenService
 
   beforeAll(async () => {
@@ -21,13 +15,9 @@ describe("FriendRequests Controller", () => {
     app = bootstrapTestApp(module)
     await app.init()
 
-    databaseService = module.get<DatabaseService>(DatabaseService)
-    userRepository = module.get<Repository<User>>(getRepositoryToken(User))
+    prismaService = module.get<PrismaService>(PrismaService)
     buildAccessTokenFromUserService = module.get<BuildAccessTokenService>(
       BuildAccessTokenService
-    )
-    friendRequestRepository = module.get<Repository<FriendRequest>>(
-      getRepositoryToken(FriendRequest)
     )
   })
 
@@ -37,17 +27,21 @@ describe("FriendRequests Controller", () => {
 
   describe("/POST", () => {
     it("/POST successfully saves a new friend request", async () => {
-      const user = await userRepository.save({
-        firstName: "test",
-        lastName: "test",
-        email: "test@test.com",
-        password: "test"
+      const user = await prismaService.user.create({
+        data: {
+          firstName: "test",
+          lastName: "test",
+          email: "test@test.com",
+          password: "test"
+        }
       })
-      const receiver = await userRepository.save({
-        firstName: "test2",
-        lastName: "test2",
-        email: "test2@test.com",
-        password: "test"
+      const receiver = await prismaService.user.create({
+        data: {
+          firstName: "test2",
+          lastName: "test2",
+          email: "test2@test.com",
+          password: "test"
+        }
       })
       const accessToken = await buildAccessTokenFromUserService.execute(user)
       const response = await request(app.getHttpServer())
@@ -61,17 +55,21 @@ describe("FriendRequests Controller", () => {
     })
 
     it("/POST fails saving a new friend request because receiver_id is empty", async () => {
-      const user = await userRepository.save({
-        firstName: "test",
-        lastName: "test",
-        email: "test@test.com",
-        password: "test"
+      const user = await prismaService.user.create({
+        data: {
+          firstName: "test",
+          lastName: "test",
+          email: "test@test.com",
+          password: "test"
+        }
       })
-      await userRepository.save({
-        firstName: "test2",
-        lastName: "test2",
-        email: "test2@test.com",
-        password: "test"
+      await prismaService.user.create({
+        data: {
+          firstName: "test2",
+          lastName: "test2",
+          email: "test2@test.com",
+          password: "test"
+        }
       })
       const accessToken = await buildAccessTokenFromUserService.execute(user)
       const response = await request(app.getHttpServer())
@@ -87,21 +85,27 @@ describe("FriendRequests Controller", () => {
 
   describe("/DELETE", () => {
     it("/DELETE successfully deletes a friend request", async () => {
-      const requester = await userRepository.save({
-        firstName: "test",
-        lastName: "test",
-        email: "test@test.com",
-        password: "test"
+      const requester = await prismaService.user.create({
+        data: {
+          firstName: "test",
+          lastName: "test",
+          email: "test@test.com",
+          password: "test"
+        }
       })
-      const receiver = await userRepository.save({
-        firstName: "test2",
-        lastName: "test2",
-        email: "test2@test.com",
-        password: "test"
+      const receiver = await prismaService.user.create({
+        data: {
+          firstName: "test2",
+          lastName: "test2",
+          email: "test2@test.com",
+          password: "test"
+        }
       })
-      const friendRequest = await friendRequestRepository.save({
-        receiverId: receiver.id,
-        requesterId: requester.id
+      const friendRequest = await prismaService.friendRequest.create({
+        data: {
+          receiverId: receiver.id,
+          requesterId: requester.id
+        }
       })
       const accessToken = await buildAccessTokenFromUserService.execute(
         receiver
@@ -116,21 +120,27 @@ describe("FriendRequests Controller", () => {
 
   describe("/GET", () => {
     it("/GET successfully gets all the friend requests from the receiver", async () => {
-      const receiver = await userRepository.save({
-        firstName: "test",
-        lastName: "test",
-        email: "test@test.com",
-        password: "test"
+      const receiver = await prismaService.user.create({
+        data: {
+          firstName: "test",
+          lastName: "test",
+          email: "test@test.com",
+          password: "test"
+        }
       })
-      const requester = await userRepository.save({
-        firstName: "test2",
-        lastName: "test2",
-        email: "test2@test.com",
-        password: "test"
+      const requester = await prismaService.user.create({
+        data: {
+          firstName: "test2",
+          lastName: "test2",
+          email: "test2@test.com",
+          password: "test"
+        }
       })
-      await friendRequestRepository.save({
-        receiverId: receiver.id,
-        requesterId: requester.id
+      await prismaService.friendRequest.create({
+        data: {
+          receiverId: receiver.id,
+          requesterId: requester.id
+        }
       })
       const accessToken = await buildAccessTokenFromUserService.execute(
         receiver
@@ -145,11 +155,11 @@ describe("FriendRequests Controller", () => {
   })
 
   afterEach(async () => {
-    await databaseService.cleanAll()
+    await prismaService.cleanAll()
   })
 
   afterAll(async () => {
     await app.close()
-    await databaseService.closeConnection()
+    await prismaService.closeConnection()
   })
 })

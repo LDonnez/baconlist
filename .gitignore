@@ -6,6 +6,7 @@ dist
 .env.development
 .env.test
 .env.production
+.env.old
 
 # Logs
 logs

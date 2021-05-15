@@ -1,6 +1,6 @@
 import { Request } from "express"
-import { User } from "../../users/entities/user.entity"
+import { UserDto } from "../../users/dto/user.dto"
 
 export type RequestWithUser = {
-  user: User
+  user: UserDto
 } & Request

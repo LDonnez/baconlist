@@ -1,0 +1,76 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model FriendRequest {
+  @@map("friend_requests")
+
+  id                                        String   @id @default(uuid()) @db.Uuid
+  createdAt                                 DateTime @default(now()) @db.Timestamp(6) @map("created_at")
+  updatedAt                                 DateTime @default(now()) @db.Timestamp(6) @map("updated_at")
+  receiverId                                String   @unique @db.Uuid  @map("receiver_id")
+  requesterId                               String   @unique @db.Uuid @map("requester_id")
+
+  receiver                                  User     @relation(fields: [receiverId], references: [id], name: "Receiver")
+  requester                                 User     @relation(fields: [requesterId], references: [id], name: "Requester")
+
+  @@index([receiverId], name: "IDX_781744f1014838837741581a8b")
+  @@index([requesterId], name: "IDX_9a4e62994c6be786cd48cc5255")
+}
+
+model Friend {
+  @@map("friends")
+
+  id                              String   @id @default(uuid()) @db.Uuid
+  userId                          String   @unique @db.Uuid @map("user_id")
+  friendId                        String   @unique @db.Uuid @map("friend_id")
+  createdAt                       DateTime @default(now()) @db.Timestamp(6) @map("created_at")
+  updatedAt                       DateTime @default(now()) @db.Timestamp(6) @map("updated_at")
+
+  friend                          User     @relation(fields: [friendId], references: [id], name: "Friend")
+  user                            User     @relation(fields: [userId], references: [id], name: "User")
+
+  @@index([friendId], name: "IDX_c9d447f72456a67d17ec30c5d0")
+  @@index([userId], name: "IDX_f2534e418d51fa6e5e8cdd4b48")
+}
+
+model RefreshTokenState {
+  @@map("refresh_token_states")
+
+  id                              String   @id @default(uuid()) @db.Uuid
+  userAgent                       String   @db.VarChar @map("user_agent")
+  revoked                         Boolean
+  createdAt                       DateTime @default(now()) @db.Timestamp(6) @map("created_at")
+  updatedAt                       DateTime @default(now()) @db.Timestamp(6) @map("updated_at")
+  userId                          String   @db.Uuid @map("user_id")
+
+  user                            User     @relation(fields: [userId], references: [id])
+
+  @@index([userId], name: "IDX_47b9e0ffdd6f9e04a6985a99eb")
+  @@index([userAgent], name: "IDX_df996151961d1c2444a0fcf0cc")
+}
+
+model User {
+  @@map("users")
+
+  id                              String                 @id @default(uuid()) @db.Uuid
+  firstName                       String                 @db.VarChar @map("first_name")
+  lastName                        String                 @db.VarChar @map("last_name")
+  email                           String                 @db.VarChar @map("email")
+  password                        String                 @db.VarChar @map("password")
+  createdAt                       DateTime               @default(now()) @db.Timestamp(6) @map("created_at")
+  updatedAt                       DateTime               @default(now()) @db.Timestamp(6) @map("updated_at")
+
+  friendRequestsAsReceiver        FriendRequest[]        @relation("Receiver")
+  friendRequestsAsRequester       FriendRequest[]        @relation("Requester")
+  refreshTokenStates              RefreshTokenState[]
+  friends                         Friend[]               @relation("User")
+  friendAsFriend                  Friend[]               @relation("Friend")
+
+  @@index([email], name: "IDX_97672ac88f789774dd47f7c8be")
+}
