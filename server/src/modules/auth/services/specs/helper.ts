@@ -1,7 +1,4 @@
 import { TestingModule, Test } from "@nestjs/testing"
-import { DatabaseModule } from "../../../database/database.module"
-import { DatabaseService } from "../../../database/database.service"
-import { RefreshTokenState } from "../../entities/refreshTokenState.entity"
 import { ConfigModule, ConfigService } from "@nestjs/config"
 import { BuildCookieWithRefreshTokenService } from "../buildCookieWithRefreshToken.service"
 import { AuthenticateService } from "../authenticate.service"
@@ -15,6 +12,7 @@ import { GetRefreshTokenStateByIdService } from "../getRefreshTokenStateById.ser
 import { BuildCookieWithCsrfTokenService } from "../buildCookieWithCsrfToken.service"
 import { BuildCsrfTokenService } from "../buildCsrfToken.service"
 import { VerifyCsrfTokenService } from "../verifyCsrfToken.service"
+import { PrismaModule } from "../../../prisma/prisma.module"
 
 export async function bootstrapTestingModule(): Promise<TestingModule> {
   return await Test.createTestingModule({
@@ -36,13 +34,11 @@ export async function bootstrapTestingModule(): Promise<TestingModule> {
           }
         })
       }),
-      DatabaseModule.forRoot(),
-      DatabaseModule.forFeature([RefreshTokenState])
+      PrismaModule
     ],
     providers: [
       BuildCookieWithRefreshTokenService,
       AuthenticateService,
-      DatabaseService,
       FindOrCreateRefreshTokenStateService,
       BuildAccessTokenService,
       BuildRefreshTokenService,

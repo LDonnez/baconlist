@@ -2,22 +2,16 @@
 import * as request from "supertest"
 import { INestApplication } from "@nestjs/common"
 import { bootstrapTestApp, bootstrapTestingModule } from "./helper"
-import { Repository } from "typeorm"
-import { getRepositoryToken } from "@nestjs/typeorm"
-import { DatabaseService } from "../../../database/database.service"
-import { User } from "../../../users/entities/user.entity"
 import { hash } from "bcrypt"
-import { RefreshTokenState } from "../../entities/refreshTokenState.entity"
 import { BuildCookieWithRefreshTokenService } from "../../services/buildCookieWithRefreshToken.service"
 import { BuildRefreshTokenService } from "../../services/buildRefreshToken.service"
 import { BuildCookieWithCsrfTokenService } from "../../services/buildCookieWithCsrfToken.service"
 import { BuildCsrfTokenService } from "../../services/buildCsrfToken.service"
+import { PrismaService } from "../../../prisma/prisma.service"
 
 describe("RefreshTokenController", () => {
   let app: INestApplication
-  let databaseService: DatabaseService
-  let userRepository: Repository<User>
-  let refreshTokenStateRepository: Repository<RefreshTokenState>
+  let prismaService: PrismaService
   let buildCookieWithRefreshTokenService: BuildCookieWithRefreshTokenService
   let buildCsrfCookieService: BuildCookieWithCsrfTokenService
   let buildCsrfTokenService: BuildCsrfTokenService
@@ -29,11 +23,7 @@ describe("RefreshTokenController", () => {
     app = bootstrapTestApp(module)
     await app.init()
 
-    databaseService = module.get<DatabaseService>(DatabaseService)
-    userRepository = module.get<Repository<User>>(getRepositoryToken(User))
-    refreshTokenStateRepository = module.get<Repository<RefreshTokenState>>(
-      getRepositoryToken(RefreshTokenState)
-    )
+    prismaService = module.get<PrismaService>(PrismaService)
     buildRefreshTokenService = module.get<BuildRefreshTokenService>(
       BuildRefreshTokenService
     )
@@ -54,16 +44,20 @@ describe("RefreshTokenController", () => {
 
   describe("/POST", () => {
     it("/POST /auth/refresh_token successfully retrieves a new accesstoken when refresh token is set in cookie", async () => {
-      const user = await userRepository.save({
-        firstName: "test",
-        lastName: "test",
-        email: "test@test.com",
-        password: await hash("test", 10)
+      const user = await prismaService.user.create({
+        data: {
+          firstName: "test",
+          lastName: "test",
+          email: "test@test.com",
+          password: await hash("test", 10)
+        }
       })
-      const refreshTokenState = await refreshTokenStateRepository.save({
-        userId: user.id,
-        userAgent: "test",
-        revoked: false
+      const refreshTokenState = await prismaService.refreshTokenState.create({
+        data: {
+          userId: user.id,
+          userAgent: "test",
+          revoked: false
+        }
       })
       const refreshToken = await buildRefreshTokenService.execute(
         refreshTokenState
@@ -83,16 +77,20 @@ describe("RefreshTokenController", () => {
     })
 
     it("/POST /auth/refresh_token successfully retrieves a new accesstoken when refresh token is set in body", async () => {
-      const user = await userRepository.save({
-        firstName: "test",
-        lastName: "test",
-        email: "test@test.com",
-        password: await hash("test", 10)
+      const user = await prismaService.user.create({
+        data: {
+          firstName: "test",
+          lastName: "test",
+          email: "test@test.com",
+          password: await hash("test", 10)
+        }
       })
-      const refreshTokenState = await refreshTokenStateRepository.save({
-        userId: user.id,
-        userAgent: "test",
-        revoked: false
+      const refreshTokenState = await prismaService.refreshTokenState.create({
+        data: {
+          userId: user.id,
+          userAgent: "test",
+          revoked: false
+        }
       })
       const refreshToken = await buildRefreshTokenService.execute(
         refreshTokenState
@@ -113,16 +111,20 @@ describe("RefreshTokenController", () => {
     })
 
     it("/POST /auth/refresh_token successfully fails retrieving a new access token because refresh token is revoked", async () => {
-      const user = await userRepository.save({
-        firstName: "test",
-        lastName: "test",
-        email: "test@test.com",
-        password: await hash("test", 10)
+      const user = await prismaService.user.create({
+        data: {
+          firstName: "test",
+          lastName: "test",
+          email: "test@test.com",
+          password: await hash("test", 10)
+        }
       })
-      const refreshTokenState = await refreshTokenStateRepository.save({
-        userId: user.id,
-        userAgent: "test",
-        revoked: true
+      const refreshTokenState = await prismaService.refreshTokenState.create({
+        data: {
+          userId: user.id,
+          userAgent: "test",
+          revoked: true
+        }
       })
       const refreshToken = await buildRefreshTokenService.execute(
         refreshTokenState
@@ -154,16 +156,16 @@ describe("RefreshTokenController", () => {
   })
 
   it("/POST /auth/refresh_token fails retrieving new access token because X-CSRF-TOKEN header is not set", async () => {
-    const user = await userRepository.save({
-      firstName: "test",
-      lastName: "test",
-      email: "test@test.com",
-      password: await hash("test", 10)
+    const user = await prismaService.user.create({
+      data: {
+        firstName: "test",
+        lastName: "test",
+        email: "test@test.com",
+        password: await hash("test", 10)
+      }
     })
-    const refreshTokenState = await refreshTokenStateRepository.save({
-      userId: user.id,
-      userAgent: "test",
-      revoked: false
+    const refreshTokenState = await prismaService.refreshTokenState.create({
+      data: { userId: user.id, userAgent: "test", revoked: false }
     })
     const refreshToken = await buildRefreshTokenService.execute(
       refreshTokenState
@@ -180,16 +182,16 @@ describe("RefreshTokenController", () => {
   })
 
   it("/POST /auth/refresh_token fails retrieving new access token because _csrf cookie is not set", async () => {
-    const user = await userRepository.save({
-      firstName: "test",
-      lastName: "test",
-      email: "test@test.com",
-      password: await hash("test", 10)
+    const user = await prismaService.user.create({
+      data: {
+        firstName: "test",
+        lastName: "test",
+        email: "test@test.com",
+        password: await hash("test", 10)
+      }
     })
-    const refreshTokenState = await refreshTokenStateRepository.save({
-      userId: user.id,
-      userAgent: "test",
-      revoked: false
+    const refreshTokenState = await prismaService.refreshTokenState.create({
+      data: { userId: user.id, userAgent: "test", revoked: false }
     })
     const refreshToken = await buildRefreshTokenService.execute(
       refreshTokenState
@@ -206,16 +208,16 @@ describe("RefreshTokenController", () => {
   })
 
   it("/POST /auth/refresh_token fails retrieving new access token because csrfToken is not verified", async () => {
-    const user = await userRepository.save({
-      firstName: "test",
-      lastName: "test",
-      email: "test@test.com",
-      password: await hash("test", 10)
+    const user = await prismaService.user.create({
+      data: {
+        firstName: "test",
+        lastName: "test",
+        email: "test@test.com",
+        password: await hash("test", 10)
+      }
     })
-    const refreshTokenState = await refreshTokenStateRepository.save({
-      userId: user.id,
-      userAgent: "test",
-      revoked: false
+    const refreshTokenState = await prismaService.refreshTokenState.create({
+      data: { userId: user.id, userAgent: "test", revoked: false }
     })
     const refreshToken = await buildRefreshTokenService.execute(
       refreshTokenState
@@ -233,16 +235,20 @@ describe("RefreshTokenController", () => {
   })
 
   it("/POST /auth/refresh_token fails retrieving new access token because csrfToken in header is not the same as in the cookie", async () => {
-    const user = await userRepository.save({
-      firstName: "test",
-      lastName: "test",
-      email: "test@test.com",
-      password: await hash("test", 10)
+    const user = await prismaService.user.create({
+      data: {
+        firstName: "test",
+        lastName: "test",
+        email: "test@test.com",
+        password: await hash("test", 10)
+      }
     })
-    const refreshTokenState = await refreshTokenStateRepository.save({
-      userId: user.id,
-      userAgent: "test",
-      revoked: false
+    const refreshTokenState = await prismaService.refreshTokenState.create({
+      data: {
+        userId: user.id,
+        userAgent: "test",
+        revoked: false
+      }
     })
     const refreshToken = await buildRefreshTokenService.execute(
       refreshTokenState
@@ -261,11 +267,11 @@ describe("RefreshTokenController", () => {
   })
 
   afterEach(async () => {
-    await databaseService.cleanAll()
+    await prismaService.cleanAll()
   })
 
   afterAll(async () => {
     await app.close()
-    await databaseService.closeConnection()
+    await prismaService.closeConnection()
   })
 })

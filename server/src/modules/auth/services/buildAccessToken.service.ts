@@ -1,6 +1,6 @@
 import { Inject, Injectable } from "@nestjs/common"
 import { JwtService } from "@nestjs/jwt"
-import { User } from "../../users/entities/user.entity"
+import { UserDto } from "../../users/dto/user.dto"
 
 @Injectable()
 export class BuildAccessTokenService {
@@ -9,12 +9,12 @@ export class BuildAccessTokenService {
     private readonly jwtService: JwtService
   ) {}
 
-  public async execute(user: User): Promise<string> {
+  public async execute(user: UserDto): Promise<string> {
     const payload = this.buildJwtPayload(user)
     return await this.jwtService.signAsync(payload)
   }
 
-  private buildJwtPayload(user: User): { sub: string } {
+  private buildJwtPayload(user: UserDto): { sub: string } {
     return { sub: user.id }
   }
 }

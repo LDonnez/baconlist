@@ -7,8 +7,6 @@ import { BuildCookieWithRefreshTokenService } from "./services/buildCookieWithRe
 import { AuthenticateService } from "./services/authenticate.service"
 import { AuthController } from "./controllers/auth.controller"
 import { JwtStrategy } from "./strategies/jwt.strategy"
-import { DatabaseModule } from "../database/database.module"
-import { RefreshTokenState } from "./entities/refreshTokenState.entity"
 import { FindOrCreateRefreshTokenStateService } from "./services/findOrCreateRefreshTokenState.service"
 import { BuildAccessTokenService } from "./services/buildAccessToken.service"
 import { RefreshTokenController } from "./controllers/refreshToken.controller"
@@ -18,6 +16,7 @@ import { RefreshTokenService } from "./services/refreshToken.service"
 import { BuildCookieWithCsrfTokenService } from "./services/buildCookieWithCsrfToken.service"
 import { VerifyCsrfTokenService } from "./services/verifyCsrfToken.service"
 import { BuildCsrfTokenService } from "./services/buildCsrfToken.service"
+import { PrismaModule } from "../prisma/prisma.module"
 
 @Module({
   imports: [
@@ -36,7 +35,7 @@ import { BuildCsrfTokenService } from "./services/buildCsrfToken.service"
         }
       })
     }),
-    DatabaseModule.forFeature([RefreshTokenState])
+    PrismaModule
   ],
   controllers: [AuthController, RefreshTokenController],
   providers: [

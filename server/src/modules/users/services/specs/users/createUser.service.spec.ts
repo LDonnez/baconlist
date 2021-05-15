@@ -1,19 +1,17 @@
-import { Repository } from "typeorm"
-import { getRepositoryToken } from "@nestjs/typeorm"
 import { bootstrapTestingModule } from "../helper"
-import { DatabaseService } from "../../../../database/database.service"
 import { CreateUserService } from "../../users/createUser.service"
-import { User } from "../../../../users/entities/user.entity"
+import { PrismaService } from "../../../../prisma/prisma.service"
+import { BadRequestException } from "@nestjs/common"
+import { TestingModule } from "@nestjs/testing"
 
 describe("CreateUserService", () => {
-  let databaseService: DatabaseService
-  let userRepository: Repository<User>
+  let module: TestingModule
+  let prismaService: PrismaService
   let createUserService: CreateUserService
 
   beforeAll(async () => {
-    const module = await bootstrapTestingModule()
-    databaseService = module.get<DatabaseService>(DatabaseService)
-    userRepository = module.get<Repository<User>>(getRepositoryToken(User))
+    module = await bootstrapTestingModule()
+    prismaService = module.get<PrismaService>(PrismaService)
     createUserService = module.get<CreateUserService>(CreateUserService)
   })
 
@@ -34,32 +32,30 @@ describe("CreateUserService", () => {
   })
 
   it("throws an error because user with that email already exists", async () => {
-    await userRepository.save({
-      firstName: "test",
-      lastName: "test",
-      email: "test@test.com",
-      password: "test",
-      passwordConfirmation: "test"
+    await prismaService.user.create({
+      data: {
+        firstName: "test",
+        lastName: "test",
+        email: "test@test.com",
+        password: "test"
+      }
     })
-    try {
-      const result = await createUserService.execute({
+    await expect(
+      createUserService.execute({
         firstName: "test",
         lastName: "test",
         email: "test@test.com",
         password: "test",
         passwordConfirmation: "test"
       })
-      expect(result).toBeUndefined()
-    } catch (error) {
-      expect(error).toBeDefined()
-    }
+    ).rejects.toThrowError(BadRequestException)
   })
 
   afterEach(async () => {
-    await databaseService.cleanAll()
+    await prismaService.cleanAll()
   })
 
   afterAll(async () => {
-    await databaseService.closeConnection()
+    await module.close()
   })
 })

@@ -1,13 +1,12 @@
-import { Injectable, UnauthorizedException } from "@nestjs/common"
-import { Repository } from "typeorm"
-import { InjectRepository } from "@nestjs/typeorm"
-import { RefreshTokenState } from "../entities/refreshTokenState.entity"
+import { Inject, Injectable, UnauthorizedException } from "@nestjs/common"
+import { PrismaService } from "../../prisma/prisma.service"
+import { RefreshTokenState } from "@prisma/client"
 
 @Injectable()
 export class GetRefreshTokenStateByIdService {
   constructor(
-    @InjectRepository(RefreshTokenState)
-    private readonly refreshTokenRepository: Repository<RefreshTokenState>
+    @Inject(PrismaService)
+    private readonly prismaService: PrismaService
   ) {}
 
   public async execute(id: string): Promise<RefreshTokenState> {
@@ -20,7 +19,9 @@ export class GetRefreshTokenStateByIdService {
 
   private async getRefreshTokenStateById(
     id: string
-  ): Promise<RefreshTokenState | undefined> {
-    return await this.refreshTokenRepository.findOne({ id })
+  ): Promise<RefreshTokenState | null> {
+    return await this.prismaService.refreshTokenState.findFirst({
+      where: { id }
+    })
   }
 }

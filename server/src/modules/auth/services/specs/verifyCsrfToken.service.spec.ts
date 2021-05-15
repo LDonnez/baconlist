@@ -1,5 +1,4 @@
 import { bootstrapTestingModule } from "./helper"
-import { DatabaseService } from "../../../database/database.service"
 import { BuildCsrfTokenService } from "../buildCsrfToken.service"
 import { VerifyCsrfTokenService } from "../verifyCsrfToken.service"
 import { UnauthorizedException } from "@nestjs/common"
@@ -8,11 +7,9 @@ import { createHmac } from "crypto"
 describe("VerifyCsrfTokenService", () => {
   let buildCsrfTokenService: BuildCsrfTokenService
   let verifyCsrfTokenService: VerifyCsrfTokenService
-  let databaseService: DatabaseService
 
   beforeAll(async () => {
     const module = await bootstrapTestingModule()
-    databaseService = module.get<DatabaseService>(DatabaseService)
     buildCsrfTokenService = module.get<BuildCsrfTokenService>(
       BuildCsrfTokenService
     )
@@ -53,9 +50,5 @@ describe("VerifyCsrfTokenService", () => {
       `sessionId.${expiresIn}.${hash}`
     )
     expect(isVerified).toBeFalsy()
-  })
-
-  afterAll(async () => {
-    await databaseService.closeConnection()
   })
 })

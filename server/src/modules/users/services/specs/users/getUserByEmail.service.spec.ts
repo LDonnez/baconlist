@@ -1,19 +1,15 @@
-import { Repository } from "typeorm"
-import { getRepositoryToken } from "@nestjs/typeorm"
 import { bootstrapTestingModule } from "../helper"
-import { DatabaseService } from "../../../../database/database.service"
 import { GetUserByEmailService } from "../../users/getUserByEmail.service"
-import { User } from "../../../../users/entities/user.entity"
+import { PrismaService } from "../../../../prisma/prisma.service"
+import { NotFoundException } from "@nestjs/common"
 
 describe("GetUserByEmailService", () => {
-  let databaseService: DatabaseService
-  let userRepository: Repository<User>
+  let prismaService: PrismaService
   let getUserByEmailService: GetUserByEmailService
 
   beforeAll(async () => {
     const module = await bootstrapTestingModule()
-    databaseService = module.get<DatabaseService>(DatabaseService)
-    userRepository = module.get<Repository<User>>(getRepositoryToken(User))
+    prismaService = module.get<PrismaService>(PrismaService)
     getUserByEmailService = module.get<GetUserByEmailService>(
       GetUserByEmailService
     )
@@ -24,11 +20,13 @@ describe("GetUserByEmailService", () => {
   })
 
   it("should successfully get the user by email", async () => {
-    const user = await userRepository.save({
-      firstName: "test",
-      lastName: "test",
-      email: "test@test.com",
-      password: "test"
+    const user = await prismaService.user.create({
+      data: {
+        firstName: "test",
+        lastName: "test",
+        email: "test@test.com",
+        password: "test"
+      }
     })
     const result = await getUserByEmailService.execute(user.email)
     expect(result).toBeDefined()
@@ -36,21 +34,16 @@ describe("GetUserByEmailService", () => {
   })
 
   it("should fail getting the user because it does not exist", async () => {
-    try {
-      const result = await getUserByEmailService.execute(
-        "idonotexist@example.com"
-      )
-      expect(result).toBeUndefined()
-    } catch (error) {
-      expect(error).toBeDefined()
-    }
+    await expect(
+      getUserByEmailService.execute("idonotexist@example.com")
+    ).rejects.toThrowError(NotFoundException)
   })
 
   afterEach(async () => {
-    await databaseService.cleanAll()
+    await prismaService.cleanAll()
   })
 
   afterAll(async () => {
-    await databaseService.closeConnection()
+    await prismaService.closeConnection()
   })
 })

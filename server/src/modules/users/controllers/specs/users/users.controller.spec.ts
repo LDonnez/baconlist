@@ -2,29 +2,22 @@
 import * as request from "supertest"
 import { INestApplication } from "@nestjs/common"
 import { bootstrapTestApp, bootstrapTestingModule } from "../helper"
-import { Repository } from "typeorm"
-import { getRepositoryToken } from "@nestjs/typeorm"
-import { DatabaseService } from "../../../../database/database.service"
-import { User } from "../../../entities/user.entity"
 import { BuildAccessTokenService } from "../../../../auth/services/buildAccessToken.service"
+import { PrismaService } from "../../../../prisma/prisma.service"
 
 describe("Users Controller", () => {
   let app: INestApplication
-  let databaseService: DatabaseService
-  let userRepository: Repository<User>
+  let prismaService: PrismaService
   let buildAccessTokenFromUserService: BuildAccessTokenService
 
   beforeAll(async () => {
     const module = await bootstrapTestingModule()
-
-    app = bootstrapTestApp(module)
-    await app.init()
-
-    databaseService = module.get<DatabaseService>(DatabaseService)
-    userRepository = module.get<Repository<User>>(getRepositoryToken(User))
+    prismaService = module.get<PrismaService>(PrismaService)
     buildAccessTokenFromUserService = module.get<BuildAccessTokenService>(
       BuildAccessTokenService
     )
+    app = bootstrapTestApp(module)
+    await app.init()
   })
 
   it("app should be defined", () => {
@@ -47,11 +40,13 @@ describe("Users Controller", () => {
     })
 
     it("/POST fails creating a new user because email already exists", async () => {
-      await userRepository.save({
-        firstName: "test",
-        lastName: "test",
-        email: "test@example.com",
-        password: "test"
+      await prismaService.user.create({
+        data: {
+          firstName: "test",
+          lastName: "test",
+          email: "test@example.com",
+          password: "test"
+        }
       })
       const response = await request(app.getHttpServer())
         .post("/users")
@@ -111,11 +106,13 @@ describe("Users Controller", () => {
 
   describe("/GET", () => {
     it("/GET successfully gets all users", async () => {
-      const user = await userRepository.save({
-        firstName: "test",
-        lastName: "test",
-        email: "test@example.com",
-        password: "test"
+      const user = await prismaService.user.create({
+        data: {
+          firstName: "test",
+          lastName: "test",
+          email: "test@test.com",
+          password: "test"
+        }
       })
 
       const accessToken = await buildAccessTokenFromUserService.execute(user)
@@ -130,11 +127,13 @@ describe("Users Controller", () => {
 
   describe("/PATCH", () => {
     it("/PATCH successfully updates a user", async () => {
-      const user = await userRepository.save({
-        firstName: "test",
-        lastName: "test",
-        email: "test@example.com",
-        password: "test"
+      const user = await prismaService.user.create({
+        data: {
+          firstName: "test",
+          lastName: "test",
+          email: "test@test.com",
+          password: "test"
+        }
       })
 
       const accessToken = await buildAccessTokenFromUserService.execute(user)
@@ -152,19 +151,23 @@ describe("Users Controller", () => {
     })
 
     it("/PATCH fails updating a user because user id is not the same as the current user", async () => {
-      const user = await userRepository.save({
-        firstName: "test",
-        lastName: "test",
-        email: "test@example.com",
-        password: "test"
+      const user = await prismaService.user.create({
+        data: {
+          firstName: "test",
+          lastName: "test",
+          email: "test@test.com",
+          password: "test"
+        }
+      })
+      const user2 = await prismaService.user.create({
+        data: {
+          firstName: "test2",
+          lastName: "test2",
+          email: "test2@example.com",
+          password: "test2"
+        }
       })
 
-      const user2 = await userRepository.save({
-        firstName: "test2",
-        lastName: "test2",
-        email: "test2@example.com",
-        password: "test2"
-      })
       const accessToken = await buildAccessTokenFromUserService.execute(user)
       const response = await request(app.getHttpServer())
         .patch(`/users/${user2.id}`)
@@ -178,11 +181,13 @@ describe("Users Controller", () => {
     })
 
     it("/PATCH fails updating a user because first name is empty", async () => {
-      const user = await userRepository.save({
-        firstName: "test",
-        lastName: "test",
-        email: "test@example.com",
-        password: "test"
+      const user = await prismaService.user.create({
+        data: {
+          firstName: "test",
+          lastName: "test",
+          email: "test@test.com",
+          password: "test"
+        }
       })
       const accessToken = await buildAccessTokenFromUserService.execute(user)
       const response = await request(app.getHttpServer())
@@ -198,11 +203,11 @@ describe("Users Controller", () => {
   })
 
   afterEach(async () => {
-    await databaseService.cleanAll()
+    await prismaService.cleanAll()
   })
 
   afterAll(async () => {
     await app.close()
-    await databaseService.closeConnection()
+    await prismaService.closeConnection()
   })
 })

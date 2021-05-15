@@ -1,24 +1,15 @@
-import { Repository } from "typeorm"
-import { getRepositoryToken } from "@nestjs/typeorm"
 import { bootstrapTestingModule } from "./helper"
-import { DatabaseService } from "../../../database/database.service"
-import { User } from "../../../users/entities/user.entity"
-import { RefreshTokenState } from "../../entities/refreshTokenState.entity"
 import { FindOrCreateRefreshTokenStateService } from "../findOrCreateRefreshTokenState.service"
+import { PrismaService } from "../../../prisma/prisma.service"
+import { UnauthorizedException } from "@nestjs/common"
 
 describe("FindOrCreateRefreshTokenService", () => {
-  let databaseService: DatabaseService
-  let userRepository: Repository<User>
-  let refreshTokenStateRepository: Repository<RefreshTokenState>
+  let prismaService: PrismaService
   let findOrCreateRefreshTokenService: FindOrCreateRefreshTokenStateService
 
   beforeAll(async () => {
     const module = await bootstrapTestingModule()
-    databaseService = module.get<DatabaseService>(DatabaseService)
-    userRepository = module.get<Repository<User>>(getRepositoryToken(User))
-    refreshTokenStateRepository = module.get<Repository<RefreshTokenState>>(
-      getRepositoryToken(RefreshTokenState)
-    )
+    prismaService = module.get<PrismaService>(PrismaService)
     findOrCreateRefreshTokenService = module.get<
       FindOrCreateRefreshTokenStateService
     >(FindOrCreateRefreshTokenStateService)
@@ -29,11 +20,13 @@ describe("FindOrCreateRefreshTokenService", () => {
   })
 
   it("should successfully create a new refresh token because it does not exist yet", async () => {
-    const user = await userRepository.save({
-      firstName: "test",
-      lastName: "test",
-      email: "test@test.com",
-      password: "test"
+    const user = await prismaService.user.create({
+      data: {
+        firstName: "test",
+        lastName: "test",
+        email: "test@test.com",
+        password: "test"
+      }
     })
 
     const result = await findOrCreateRefreshTokenService.execute(
@@ -44,16 +37,20 @@ describe("FindOrCreateRefreshTokenService", () => {
   })
 
   it("should successfully return the existing refresh token", async () => {
-    const user = await userRepository.save({
-      firstName: "test",
-      lastName: "test",
-      email: "test@test.com",
-      password: "test"
+    const user = await prismaService.user.create({
+      data: {
+        firstName: "test",
+        lastName: "test",
+        email: "test@test.com",
+        password: "test"
+      }
     })
-    const refreshTokenState = await refreshTokenStateRepository.save({
-      userId: user.id,
-      userAgent: "test",
-      revoked: false
+    const refreshTokenState = await prismaService.refreshTokenState.create({
+      data: {
+        userId: user.id,
+        userAgent: "test",
+        revoked: false
+      }
     })
     const result = await findOrCreateRefreshTokenService.execute(
       user.id,
@@ -64,16 +61,20 @@ describe("FindOrCreateRefreshTokenService", () => {
   })
 
   it("should successfully create a new refresh token when another one exists with a different user agent", async () => {
-    const user = await userRepository.save({
-      firstName: "test",
-      lastName: "test",
-      email: "test@test.com",
-      password: "test"
+    const user = await prismaService.user.create({
+      data: {
+        firstName: "test",
+        lastName: "test",
+        email: "test@test.com",
+        password: "test"
+      }
     })
-    await refreshTokenStateRepository.save({
-      userId: user.id,
-      userAgent: "other",
-      revoked: false
+    await prismaService.refreshTokenState.create({
+      data: {
+        userId: user.id,
+        userAgent: "other",
+        revoked: false
+      }
     })
     const result = await findOrCreateRefreshTokenService.execute(
       user.id,
@@ -84,33 +85,31 @@ describe("FindOrCreateRefreshTokenService", () => {
   })
 
   it("should fail finding or creating a refresh token because existing token is revoked", async () => {
-    const user = await userRepository.save({
-      firstName: "test",
-      lastName: "test",
-      email: "test@test.com",
-      password: "test"
+    const user = await prismaService.user.create({
+      data: {
+        firstName: "test",
+        lastName: "test",
+        email: "test@test.com",
+        password: "test"
+      }
     })
-    await refreshTokenStateRepository.save({
-      userId: user.id,
-      userAgent: "test",
-      revoked: true
+    await prismaService.refreshTokenState.create({
+      data: {
+        userId: user.id,
+        userAgent: "test",
+        revoked: true
+      }
     })
-    try {
-      const result = await findOrCreateRefreshTokenService.execute(
-        user.id,
-        "test"
-      )
-      expect(result).toBeUndefined()
-    } catch (e) {
-      expect(e).toBeDefined()
-    }
+    await expect(
+      findOrCreateRefreshTokenService.execute(user.id, "test")
+    ).rejects.toThrowError(UnauthorizedException)
   })
 
   afterEach(async () => {
-    await databaseService.cleanAll()
+    await prismaService.cleanAll()
   })
 
   afterAll(async () => {
-    await databaseService.closeConnection()
+    await prismaService.closeConnection()
   })
 })

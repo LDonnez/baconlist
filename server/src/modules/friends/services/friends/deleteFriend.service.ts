@@ -1,27 +1,55 @@
-import { Injectable, NotFoundException } from "@nestjs/common"
-import { InjectConnection } from "@nestjs/typeorm"
-import { Connection, EntityManager } from "typeorm"
-import { Friend } from "../../entities/friend.entity"
+import { Inject, Injectable, NotFoundException } from "@nestjs/common"
+import { PrismaService } from "../../../prisma/prisma.service"
+import { FriendDto } from "../../dto/friend.dto"
 
 @Injectable()
 export class DeleteFriendService {
-  constructor(@InjectConnection() private readonly connection: Connection) {}
+  constructor(
+    @Inject(PrismaService) private readonly prismaService: PrismaService
+  ) {}
 
-  public async execute(userId: string, friendId: string): Promise<Friend> {
-    return await this.connection.transaction(async (manager: EntityManager) => {
-      const friend = await manager.findOne(Friend, {
+  public async execute(userId: string, friendId: string): Promise<FriendDto> {
+    const friend = await this.prismaService.friend.findFirst({
+      where: {
         id: friendId,
         userId: userId
-      })
-      if (!friend) {
-        throw new NotFoundException(`friend with id: ${friendId} is not found`)
       }
-      await manager.delete(Friend, {
-        userId: friend.friendId,
-        friendId: friend.userId
-      })
-      await manager.delete(Friend, { id: friend.id })
-      return friend
     })
+    if (!friend) {
+      throw new NotFoundException(`friend with id: ${friendId} is not found`)
+    }
+    const [, deletedFriend] = await this.prismaService.$transaction([
+      this.prismaService.friend.deleteMany({
+        where: { userId: friend.friendId, friendId: friend.userId }
+      }),
+      this.prismaService.friend.delete({
+        where: { id: friend.id },
+        include: {
+          friend: {
+            select: {
+              id: true,
+              firstName: true,
+              lastName: true,
+              email: true,
+              password: false,
+              createdAt: true,
+              updatedAt: true
+            }
+          },
+          user: {
+            select: {
+              id: true,
+              firstName: true,
+              lastName: true,
+              email: true,
+              password: false,
+              createdAt: true,
+              updatedAt: true
+            }
+          }
+        }
+      })
+    ])
+    return deletedFriend
   }
 }

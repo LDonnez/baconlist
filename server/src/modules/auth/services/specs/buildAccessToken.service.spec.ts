@@ -1,19 +1,14 @@
-import { Repository } from "typeorm"
-import { getRepositoryToken } from "@nestjs/typeorm"
 import { bootstrapTestingModule } from "./helper"
-import { DatabaseService } from "../../../database/database.service"
-import { User } from "../../../users/entities/user.entity"
+import { PrismaService } from "../../../prisma/prisma.service"
 import { BuildAccessTokenService } from "../buildAccessToken.service"
 
 describe("BuildAccessTokenService", () => {
-  let databaseService: DatabaseService
-  let userRepository: Repository<User>
+  let prismaService: PrismaService
   let buildAccessTokenService: BuildAccessTokenService
 
   beforeAll(async () => {
     const module = await bootstrapTestingModule()
-    databaseService = module.get<DatabaseService>(DatabaseService)
-    userRepository = module.get<Repository<User>>(getRepositoryToken(User))
+    prismaService = module.get<PrismaService>(PrismaService)
     buildAccessTokenService = module.get<BuildAccessTokenService>(
       BuildAccessTokenService
     )
@@ -24,11 +19,13 @@ describe("BuildAccessTokenService", () => {
   })
 
   it("should successfully build an access token", async () => {
-    const user = await userRepository.save({
-      firstName: "test",
-      lastName: "test",
-      email: "test@test.com",
-      password: "test"
+    const user = await prismaService.user.create({
+      data: {
+        firstName: "test",
+        lastName: "test",
+        email: "test@test.com",
+        password: "test"
+      }
     })
 
     const result = await buildAccessTokenService.execute(user)
@@ -36,10 +33,10 @@ describe("BuildAccessTokenService", () => {
   })
 
   afterEach(async () => {
-    await databaseService.cleanAll()
+    await prismaService.cleanAll()
   })
 
   afterAll(async () => {
-    await databaseService.closeConnection()
+    await prismaService.closeConnection()
   })
 })

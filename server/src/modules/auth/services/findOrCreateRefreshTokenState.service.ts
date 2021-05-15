@@ -1,16 +1,15 @@
 import { Injectable, Inject, UnauthorizedException } from "@nestjs/common"
-import { Repository } from "typeorm"
-import { InjectRepository } from "@nestjs/typeorm"
-import { RefreshTokenState } from "../entities/refreshTokenState.entity"
 import { GetUserByIdService } from "../../users/services/users/getUserById.service"
+import { PrismaService } from "../../prisma/prisma.service"
+import { RefreshTokenState } from "@prisma/client"
 
 @Injectable()
 export class FindOrCreateRefreshTokenStateService {
   constructor(
     @Inject(GetUserByIdService)
     private readonly getUserByIdService: GetUserByIdService,
-    @InjectRepository(RefreshTokenState)
-    private readonly refreshTokenStateRepository: Repository<RefreshTokenState>
+    @Inject(PrismaService)
+    private readonly prismaService: PrismaService
   ) {}
 
   public async execute(
@@ -35,26 +34,22 @@ export class FindOrCreateRefreshTokenStateService {
   private async getRefreshTokenStateByUserIdAndUserAgent(
     userId: string,
     userAgent: string
-  ): Promise<RefreshTokenState | undefined> {
-    return await this.refreshTokenStateRepository.findOne({ userId, userAgent })
+  ): Promise<RefreshTokenState | null> {
+    return await this.prismaService.refreshTokenState.findFirst({
+      where: { userId, userAgent }
+    })
   }
 
   private async createRefreshToken(
     userId: string,
     userAgent: string
   ): Promise<RefreshTokenState> {
-    const newRefresTokenState = this.buildRefreshTokenState(userId, userAgent)
-    return await this.refreshTokenStateRepository.save(newRefresTokenState)
-  }
-
-  private buildRefreshTokenState(
-    userId: string,
-    userAgent: string
-  ): RefreshTokenState {
-    const newRefresToken = new RefreshTokenState()
-    newRefresToken.userId = userId
-    newRefresToken.userAgent = userAgent
-    newRefresToken.revoked = false
-    return newRefresToken
+    return await this.prismaService.refreshTokenState.create({
+      data: {
+        userAgent,
+        userId,
+        revoked: false
+      }
+    })
   }
 }
