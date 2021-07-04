@@ -1,17 +1,18 @@
-import { AxiosError, AxiosRequestConfig, AxiosResponse } from "axios"
+import { AxiosRequestConfig } from "axios"
+import store from "store"
 
-export function requestInterceptor(config: AxiosRequestConfig) {
-  config.headers.Authorization = `Bearer <access_token>`
-  return config
-}
-
-export function responseInterceptor(response: AxiosResponse) {
-  return response
-}
-
-export function responseErrorInterceptor(error: AxiosError) {
-  if (error && error.response && error.response.status === 401) {
-    console.log("refresh token here")
+export async function requestInterceptor(
+  config: AxiosRequestConfig
+): Promise<AxiosRequestConfig> {
+  try {
+    const state = store.getState()
+    const authToken = state.auth.accessToken
+    if (authToken) {
+      config.headers.Authorization = `Bearer ${authToken}`
+    }
+    return config
+  } catch (error) {
+  } finally {
+    return config
   }
-  return Promise.reject(error)
 }

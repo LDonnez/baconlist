@@ -1,12 +1,14 @@
 import { createApiInstance } from "api"
-import axios, { AxiosInstance, AxiosStatic } from "axios"
-import { API_URLS } from "./config"
+import { AxiosInstance, AxiosStatic } from "axios"
+import { io, Socket } from "socket.io-client"
+import { requestInterceptor } from "./interceptors"
 
-function createProtectedInstance(
+export function createProtectedInstance(
   axiosInstance: AxiosStatic,
   url: string
 ): AxiosInstance {
   const instance = createApiInstance(axiosInstance, url)
+  instance.interceptors.request.use(requestInterceptor)
   return instance
 }
 
