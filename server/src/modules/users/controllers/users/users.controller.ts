@@ -24,6 +24,7 @@ import { JwtGuard } from "../../../auth/guards/jwtGuard"
 import { CurrentUser } from "../../../auth/decorators/currentUser.decorator"
 import { PrismaService } from "../../../prisma/prisma.service"
 import { UserDto, CreateUserDto, UpdateUserDto } from "../../dto/user.dto"
+import { GetUserByIdService } from "../../services/users/getUserById.service"
 
 @ApiTags("Users")
 @Controller("users")
@@ -33,6 +34,8 @@ export class UsersController {
     private readonly createUserService: CreateUserService,
     @Inject(UpdateUserService)
     private readonly updateUserService: UpdateUserService,
+    @Inject(GetUserByIdService)
+    private readonly getUserByIdService: GetUserByIdService,
     @Inject(PrismaService) private readonly prismaService: PrismaService
   ) {}
 
@@ -43,6 +46,21 @@ export class UsersController {
   @Post()
   public async create(@Body() userData: CreateUserDto): Promise<UserDto> {
     return await this.createUserService.execute(userData)
+  }
+
+  @ApiOperation({ description: "returns user by id" })
+  @ApiOkResponse({ description: "success", type: UserDto })
+  @UseGuards(JwtGuard)
+  @Get("/:id")
+  public async show(
+    @Param("id") id: string,
+    @CurrentUser() currentUser: User
+  ): Promise<UserDto> {
+    const userId = currentUser.id
+    if (userId !== id) {
+      throw new UnauthorizedException("not allowed")
+    }
+    return await this.getUserByIdService.execute(id)
   }
 
   @ApiOperation({ description: "returns all users" })

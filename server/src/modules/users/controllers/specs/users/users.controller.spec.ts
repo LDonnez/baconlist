@@ -104,6 +104,53 @@ describe("Users Controller", () => {
     })
   })
 
+  describe("/GET /:id", () => {
+    it("/GET successfully gets user by id", async () => {
+      const user = await prismaService.user.create({
+        data: {
+          firstName: "test",
+          lastName: "test",
+          email: "test@test.com",
+          password: "test"
+        }
+      })
+
+      const accessToken = await buildAccessTokenFromUserService.execute(user)
+      const response = await request(app.getHttpServer())
+        .get(`/users/${user.id}`)
+        .set("Authorization", `Bearer ${accessToken}`)
+        .expect(200)
+      expect(response.body).toBeDefined()
+      expect(response.body.id).toEqual(user.id)
+    })
+
+    it("/GET returns 403 because user id is not same as current user", async () => {
+      const user = await prismaService.user.create({
+        data: {
+          firstName: "test",
+          lastName: "test",
+          email: "test@test.com",
+          password: "test"
+        }
+      })
+
+      const user2 = await prismaService.user.create({
+        data: {
+          firstName: "test",
+          lastName: "test",
+          email: "test2@test.com",
+          password: "test"
+        }
+      })
+      const accessToken = await buildAccessTokenFromUserService.execute(user)
+      const response = await request(app.getHttpServer())
+        .get(`/users/${user2.id}`)
+        .set("Authorization", `Bearer ${accessToken}`)
+        .expect(401)
+      expect(response.body).toBeDefined()
+    })
+  })
+
   describe("/GET", () => {
     it("/GET successfully gets all users", async () => {
       const user = await prismaService.user.create({
