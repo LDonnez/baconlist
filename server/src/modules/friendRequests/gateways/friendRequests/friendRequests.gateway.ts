@@ -23,7 +23,7 @@ export class FriendRequestsGateway extends BaseGateway {
 
   @SubscribeMessage(SocketEvents.NEW_FRIEND_REQUEST)
   public async get(@ConnectedSocket() client: Socket): Promise<void> {
-    client.join(this.room)
+    await client.join(this.room)
     const data = await this.retrieveFriendRequestsService.execute(
       this.currentUserId
     )

@@ -23,7 +23,7 @@ export class FriendsGateway extends BaseGateway {
 
   @SubscribeMessage(SocketEvents.NEW_FRIEND)
   public async get(@ConnectedSocket() client: Socket): Promise<void> {
-    client.join(this.room)
+    await client.join(this.room)
     const data = await this.retrieveFriendsService.execute(this.currentUserId)
     client.nsp.to(this.room).emit(SocketEvents.NEW_FRIEND, data)
   }
