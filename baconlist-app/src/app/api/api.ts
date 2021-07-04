@@ -12,4 +12,14 @@ export function createProtectedInstance(
   return instance
 }
 
-export const baconlistApi = createProtectedInstance(axios, API_URLS.baconlist)
+export async function connectToAuthorizedWebSocket(
+  uri: string,
+  accessToken: string
+): Promise<Socket> {
+  const socket = io(uri, { auth: { accessToken } })
+  return new Promise(resolve => {
+    socket.on("connect", () => {
+      resolve(socket)
+    })
+  })
+}
