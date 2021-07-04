@@ -7,8 +7,8 @@ export const ProtectedRoute = ({
   component,
   ...rest
 }: RouteObject): JSX.Element => {
-  const { authorized } = useAuth()
-  console.log("AUTHORIZED: ", authorized)
+  useAuth()
+
   return <Route path={path} component={component} {...rest} />
 }
 
