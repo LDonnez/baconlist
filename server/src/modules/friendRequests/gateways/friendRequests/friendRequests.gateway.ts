@@ -10,7 +10,7 @@ import { JwtService } from "@nestjs/jwt"
 import { Messages } from "./types"
 import { BaseGateway } from "../../../../gateways/base.gateway"
 
-@WebSocketGateway({ namespace: "friends" })
+@WebSocketGateway({ namespace: "friend_requests" })
 export class FriendRequestsGateway extends BaseGateway {
   constructor(
     @Inject(RetrieveFriendRequestsService)
