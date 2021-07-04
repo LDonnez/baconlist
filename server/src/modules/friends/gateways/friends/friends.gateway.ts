@@ -7,7 +7,7 @@ import { Socket } from "socket.io"
 import { Inject } from "@nestjs/common"
 import { RetrieveFriendsService } from "../../services/friends/retrieveFriends.service"
 import { JwtService } from "@nestjs/jwt"
-import { Messages } from "./types"
+import { SocketEvents } from "./types"
 import { BaseGateway } from "../../../../gateways/base.gateway"
 
 @WebSocketGateway({ namespace: "friends" })
@@ -21,16 +21,16 @@ export class FriendsGateway extends BaseGateway {
     super(jwtService)
   }
 
-  @SubscribeMessage(Messages.GET)
+  @SubscribeMessage(SocketEvents.NEW_FRIEND)
   public async get(@ConnectedSocket() client: Socket): Promise<void> {
     client.join(this.room)
     const data = await this.retrieveFriendsService.execute(this.currentUserId)
-    client.nsp.to(this.room).emit(Messages.GET, data)
+    client.nsp.to(this.room).emit(SocketEvents.NEW_FRIEND, data)
   }
 
   public async refresh(userId: string): Promise<void> {
     const data = await this.retrieveFriendsService.execute(this.currentUserId)
-    this.server.to(`/friends/${userId}`).emit(Messages.GET, data)
+    this.server.to(`/friends/${userId}`).emit(SocketEvents.NEW_FRIEND, data)
   }
 
   private get room(): string {

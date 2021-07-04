@@ -1,3 +1,3 @@
-export enum Messages {
-  GET = "get"
+export enum SocketEvents {
+  NEW_FRIEND = "new_friend"
 }
