@@ -3,6 +3,7 @@ import { DocumentBuilder, SwaggerModule } from "@nestjs/swagger"
 import { AppModule } from "./modules/app/app.module"
 import * as cookieParser from "cookie-parser"
 import { UnauthorizedException } from "@nestjs/common"
+import { SocketIoAdapter } from "./adapters/socketIo.adapter"
 
 async function bootstrap(): Promise<void> {
   const app = await NestFactory.create(AppModule, {
@@ -24,7 +25,7 @@ async function bootstrap(): Promise<void> {
     }
   })
   app.use(cookieParser())
-
+  app.useWebSocketAdapter(new SocketIoAdapter(app))
   const options = new DocumentBuilder()
     .setTitle(AppModule.apiTitle)
     .setDescription(AppModule.apiDescription)
