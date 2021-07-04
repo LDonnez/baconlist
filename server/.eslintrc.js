@@ -16,8 +16,7 @@ module.exports = {
     "plugin:@typescript-eslint/recommended",
     "eslint:recommended",
     "plugin:@typescript-eslint/recommended-requiring-type-checking",
-    "prettier",
-    "prettier/@typescript-eslint"
+    "prettier"
   ],
   rules: {
     "@typescript-eslint/interface-name-prefix": "off",
