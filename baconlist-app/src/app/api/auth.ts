@@ -5,6 +5,16 @@ export function login(instance: AxiosInstance, data: { email: string, password: 
   return instance("/auth/token", {
     withCredentials: true,
     method: "POST",
-    data 
+    data
+  })
+}
+
+export function refreshToken(instance: AxiosInstance, data: { csrfToken: string }): AxiosPromise<AuthResponse> {
+  return instance("/auth/refresh_token", {
+    withCredentials: true,
+    method: "POST",
+    headers: {
+      "X-CSRF-TOKEN": data.csrfToken
+    }
   })
 }

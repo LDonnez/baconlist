@@ -10,6 +10,7 @@ import { AccessTokenPayload } from "app/types/accessTokenPayload"
 import { parseCookie } from "app/utils/parseCookie"
 import { isExpired, parseToken } from "app/utils/token"
 import { RootState } from "store"
+import * as api from "app/api/auth"
 
 export type AuthState = {
   refreshToken?: string
@@ -29,8 +30,8 @@ const initialState: AuthState = {
 
 export const authenticate = createAsyncThunk(
   "auth/authenticate",
-  async (payload: { email: string; password: string }, { dispatch }) => {
-    const response = await authApi.callAuthenticate(payload)
+  async (payload: { email: string; password: string }, { dispatch, extra: { baconlistApi } }) => {
+    const response = await api.login(baconlistApi, payload)
     const csrfTokenFromCookie = parseCookie(document.cookie, "_csrf")
     if (csrfTokenFromCookie) {
       dispatch(setCsrfToken(csrfTokenFromCookie))
@@ -41,10 +42,10 @@ export const authenticate = createAsyncThunk(
 
 export const refresh = createAsyncThunk(
   "auth/refresh",
-  async (_, { dispatch, getState }) => {
+  async (_, { dispatch, getState, extra: { baconlistApi } }) => {
     const state: RootState = getState() as RootState
     const csrfToken = getCsrfToken(state) as string
-    const response = await authApi.callRefresh(csrfToken)
+    const response = await api.refreshToken(baconlistApi, { csrfToken })
     const csrfTokenFromCookie = parseCookie(document.cookie, "_csrf")
     if (csrfTokenFromCookie) {
       dispatch(setCsrfToken(csrfTokenFromCookie))
