@@ -5,10 +5,11 @@ import {
   PayloadAction,
   SerializedError
 } from "@reduxjs/toolkit"
-import * as authApi from "app/api/auth"
 import { AccessTokenPayload } from "app/types/accessTokenPayload"
+import { AuthResponse } from "app/types/authResponse"
 import { parseCookie } from "app/utils/parseCookie"
 import { isExpired, parseToken } from "app/utils/token"
+import { AxiosInstance } from "axios"
 import { RootState } from "store"
 import * as api from "app/api/auth"
 
@@ -28,9 +29,16 @@ const initialState: AuthState = {
   error: undefined
 }
 
-export const authenticate = createAsyncThunk(
+export const authenticate = createAsyncThunk<
+  AuthResponse,
+  { email: string; password: string },
+  { extra: { baconlistApi: AxiosInstance } }
+>(
   "auth/authenticate",
-  async (payload: { email: string; password: string }, { dispatch, extra: { baconlistApi } }) => {
+  async (
+    payload: { email: string; password: string },
+    { dispatch, extra: { baconlistApi } }
+  ) => {
     const response = await api.login(baconlistApi, payload)
     const csrfTokenFromCookie = parseCookie(document.cookie, "_csrf")
     if (csrfTokenFromCookie) {
@@ -40,17 +48,25 @@ export const authenticate = createAsyncThunk(
   }
 )
 
-export const refresh = createAsyncThunk(
-  "auth/refresh",
+export const getAccessTokenSilently = createAsyncThunk<
+  AuthResponse,
+  undefined,
+  { getState: () => RootState; extra: { baconlistApi: AxiosInstance } }
+>(
+  "auth/getAccessTokenSilently",
   async (_, { dispatch, getState, extra: { baconlistApi } }) => {
     const state: RootState = getState() as RootState
-    const csrfToken = getCsrfToken(state) as string
-    const response = await api.refreshToken(baconlistApi, { csrfToken })
-    const csrfTokenFromCookie = parseCookie(document.cookie, "_csrf")
-    if (csrfTokenFromCookie) {
-      dispatch(setCsrfToken(csrfTokenFromCookie))
+    const isExpired = getAccessTokenIsExpired(state)
+    if (isExpired) {
+      const csrfToken = getCsrfToken(state) as string
+      const response = await api.refreshToken(baconlistApi, { csrfToken })
+      const csrfTokenFromCookie = parseCookie(document.cookie, "_csrf")
+      if (csrfTokenFromCookie) {
+        dispatch(setCsrfToken(csrfTokenFromCookie))
+      }
+      return response.data
     }
-    return response.data
+    return selectSelf(state)
   }
 )
 
@@ -77,16 +93,16 @@ const authSlice = createSlice({
         const { error } = action
         state.error = error
       })
-      .addCase(refresh.pending, (state, _) => {
+      .addCase(getAccessTokenSilently.pending, (state, _) => {
         state.isLoading = true
       })
-      .addCase(refresh.fulfilled, (state, action) => {
+      .addCase(getAccessTokenSilently.fulfilled, (state, action) => {
         const { refreshToken, accessToken } = action.payload
         state.refreshToken = refreshToken
         state.accessToken = accessToken
         state.isLoading = false
       })
-      .addCase(refresh.rejected, (state, action) => {
+      .addCase(getAccessTokenSilently.rejected, (state, action) => {
         const { error } = action
         state.error = error
       })
@@ -103,6 +119,11 @@ export const getIsLoading = createSelector(selectSelf, state => state.isLoading)
 export const getError = createSelector(selectSelf, state => state.error)
 
 export const getCsrfToken = createSelector(selectSelf, state => state.csrfToken)
+
+export const getAccessToken = createSelector(
+  selectSelf,
+  state => state.accessToken
+)
 
 export const getTokenPayload = createSelector(selectSelf, state => {
   if (state.accessToken) {

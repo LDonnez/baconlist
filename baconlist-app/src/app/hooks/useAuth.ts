@@ -1,8 +1,9 @@
 import { unwrapResult } from "@reduxjs/toolkit"
 import {
-  getAccessTokenIsExpired,
   getTokenPayload,
-  refresh
+  getAccessToken,
+  getAccessTokenSilently,
+  getAccessTokenIsExpired
 } from "app/redux/auth/auth.slice"
 import { useEffect, useMemo, useState } from "react"
 import { useSelector } from "react-redux"
@@ -13,6 +14,7 @@ export const useAuth = () => {
   const { push } = useHistory()
   const dispatch = useAppDispatch()
   const isExpired = useSelector(getAccessTokenIsExpired)
+  const accessToken = useSelector(getAccessToken)
   const tokenPayload = useSelector(getTokenPayload)
   const currentUserId = useMemo(() => {
     if (tokenPayload?.sub) {
@@ -22,18 +24,16 @@ export const useAuth = () => {
   const [authorized, setAuthorized] = useState(!isExpired)
 
   useEffect(() => {
-    async function refreshToken() {
+    async function authorize() {
       try {
-        unwrapResult(await dispatch(refresh()))
+        unwrapResult(await dispatch(getAccessTokenSilently()))
         setAuthorized(true)
       } catch (error) {
         push("/login")
       }
     }
-    if (!authorized) {
-      refreshToken()
-    }
+    authorize()
   }, [dispatch, authorized, push])
 
-  return { authorized, tokenPayload, currentUserId }
+  return { authorized, accessToken, tokenPayload, currentUserId }
 }
